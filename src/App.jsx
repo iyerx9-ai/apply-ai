@@ -9,21 +9,6 @@ const COLORS = {
   text: "#e6edf3", textMuted: "#7d8590", textDim: "#484f58",
 };
 
-// callClaude moved to api.js
-const _unused = async (prompt, system) => {
-  const res = await fetch("/api/claude", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      model: "claude-sonnet-4-20250514", max_tokens: 1000,
-      system: system || "You are a helpful AI assistant.",
-      messages: [{ role: "user", content: prompt }],
-    }),
-  });
-  const data = await res.json();
-  return data.content?.map((b) => b.text || "").join("") || "";
-};
-
 const Spinner = ({ size = 16, color = COLORS.accent }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" style={{ animation: "spin 0.8s linear infinite" }}>
     <style>{"@keyframes spin { to { transform: rotate(360deg); } }"}</style>
@@ -68,7 +53,7 @@ const Modal = ({ open, onClose, title, children }) => {
   if (!open) return null;
   return (
     <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "#000000cc", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
-      <div onClick={(e) => e.stopPropagation()} style={{ background: COLORS.card, border: "1px solid " + COLORS.border, borderRadius: 12, width: "100%", maxWidth: 720, maxHeight: "85vh", display: "flex", flexDirection: "column", boxShadow: "0 24px 80px #00000090" }}>
+      <div onClick={(e) => e.stopPropagation()} style={{ background: COLORS.card, border: "1px solid " + COLORS.border, borderRadius: 12, width: "100%", maxWidth: 720, maxHeight: "85vh", display: "flex", flexDirection: "column" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "18px 24px", borderBottom: "1px solid " + COLORS.border }}>
           <span style={{ fontWeight: 700, fontSize: 16, color: COLORS.text }}>{title}</span>
           <button onClick={onClose} style={{ background: "none", border: "none", color: COLORS.textMuted, cursor: "pointer", fontSize: 20 }}>x</button>
@@ -98,26 +83,19 @@ const iStyle = {
   background: COLORS.surface, border: "1px solid " + COLORS.border,
   borderRadius: 7, padding: "9px 12px", color: COLORS.text, fontSize: 13, fontFamily: "inherit", outline: "none",
 };
-
 const lStyle = { display: "block", color: COLORS.textMuted, fontSize: 11, letterSpacing: "0.07em", marginBottom: 6, fontWeight: 600 };
 
 function HomeScreen({ onNavigate }) {
   return (
     <div style={{ textAlign: "center", padding: "80px 0" }}>
       <div style={{ fontSize: 56, marginBottom: 16 }}>⚡</div>
-      <h1 style={{ color: COLORS.text, fontSize: 32, fontWeight: 800, margin: "0 0 12px", letterSpacing: "-0.02em" }}>ApplyAI</h1>
+      <h1 style={{ color: COLORS.text, fontSize: 32, fontWeight: 800, margin: "0 0 12px" }}>ApplyAI</h1>
       <p style={{ color: COLORS.textMuted, fontSize: 16, margin: "0 0 48px" }}>Your AI-powered career platform</p>
       <div style={{ display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap" }}>
-        <button onClick={() => onNavigate("setup")} style={{
-          padding: "18px 36px", background: COLORS.accent, color: "#0a0b0d",
-          border: "none", borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: "pointer",
-        }}>
+        <button onClick={() => onNavigate("setup")} style={{ padding: "18px 36px", background: COLORS.accent, color: "#0a0b0d", border: "none", borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: "pointer" }}>
           Find Jobs with AI
         </button>
-        <button onClick={() => onNavigate("scorer")} style={{
-          padding: "18px 36px", background: "transparent", color: COLORS.accent,
-          border: "1px solid " + COLORS.accent + "40", borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: "pointer",
-        }}>
+        <button onClick={() => onNavigate("scorer")} style={{ padding: "18px 36px", background: "transparent", color: COLORS.accent, border: "1px solid " + COLORS.accent + "40", borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: "pointer" }}>
           Score My Resume
         </button>
       </div>
@@ -212,14 +190,17 @@ function JobsStep({ profile, onBack }) {
     try {
       const raw = await callClaude(
         `Generate 6 realistic job openings for a ${profile.exp} ${profile.role} with skills: ${profile.skills.join(", ")}.
-Return ONLY valid JSON array, no markdown:
+Return ONLY a valid JSON array, no markdown, no explanation, no extra text:
 [{"id":"j1","title":"...","company":"...","location":"...","type":"Remote","salary":"$X-$Y/yr","match":85,"tags":["skill1"],"posted":"2 days ago","desc":"Short description.","requirements":["req1","req2","req3"]}]`,
-        "Return only a raw JSON array. No markdown fences, no preamble."
+        "Return only a raw JSON array. No markdown. No extra text before or after."
       );
       const clean = raw.replace(/```json|```/g, "").trim();
-      setJobs(JSON.parse(clean));
-    } catch {
-      showToast("Failed to fetch jobs. Try again.", "error");
+      const start = clean.indexOf("[");
+      const end = clean.lastIndexOf("]") + 1;
+      const jsonStr = clean.slice(start, end);
+      setJobs(JSON.parse(jsonStr));
+    } catch (err) {
+      showToast("Failed to fetch jobs: " + err.message, "error");
     }
     setFetching(false);
   }, [profile]);
@@ -261,7 +242,7 @@ Return ONLY valid JSON array, no markdown:
   return (
     <div>
       {toast && (
-        <div style={{ position: "fixed", top: 20, right: 20, zIndex: 2000, background: toast.type === "error" ? COLORS.redDim : COLORS.greenDim, border: "1px solid " + (toast.type === "error" ? COLORS.red : COLORS.green) + "50", color: toast.type === "error" ? COLORS.red : COLORS.green, padding: "12px 20px", borderRadius: 8, fontSize: 13, fontWeight: 500 }}>
+        <div style={{ position: "fixed", top: 20, right: 20, zIndex: 2000, background: toast.type === "error" ? COLORS.redDim : COLORS.greenDim, border: "1px solid " + (toast.type === "error" ? COLORS.red : COLORS.green) + "50", color: toast.type === "error" ? COLORS.red : COLORS.green, padding: "12px 20px", borderRadius: 8, fontSize: 13, fontWeight: 500, maxWidth: 300 }}>
           {toast.msg}
         </div>
       )}
@@ -294,13 +275,13 @@ Return ONLY valid JSON array, no markdown:
                 <div style={{ width: 44, height: 44, borderRadius: 8, flexShrink: 0, background: "hsl(" + (job.id.charCodeAt(1) * 40) + ", 50%, 20%)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, border: "1px solid " + COLORS.border }}>
                   {job.company[0]}
                 </div>
-                <div style={{ flex: 1 }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                    <div>
+                    <div style={{ minWidth: 0 }}>
                       <h3 style={{ margin: "0 0 2px", fontSize: 15, fontWeight: 700, color: COLORS.text }}>{job.title}</h3>
                       <p style={{ margin: 0, fontSize: 13, color: COLORS.textMuted }}>{job.company} · {job.location} · <span style={{ color: job.type === "Remote" ? COLORS.green : COLORS.blue }}>{job.type}</span></p>
                     </div>
-                    <div style={{ textAlign: "right" }}>
+                    <div style={{ textAlign: "right", flexShrink: 0, marginLeft: 8 }}>
                       <div style={{ fontSize: 18, fontWeight: 800, color: matchColor, fontFamily: "monospace" }}>{job.match}%</div>
                       <div style={{ fontSize: 10, color: COLORS.textDim }}>MATCH</div>
                     </div>
@@ -338,11 +319,9 @@ Return ONLY valid JSON array, no markdown:
       </div>
 
       {appliedIds.length > 0 && (
-        <div style={{ marginTop: 20, background: COLORS.greenDim, border: "1px solid " + COLORS.green + "40", borderRadius: 10, padding: "14px 20px", display: "flex", alignItems: "center", gap: 12 }}>
-          <div>
-            <div style={{ color: COLORS.green, fontWeight: 700, fontSize: 14 }}>{appliedIds.length} application{appliedIds.length > 1 ? "s" : ""} submitted</div>
-            <div style={{ color: COLORS.textMuted, fontSize: 12 }}>AI tailored your resume for each role</div>
-          </div>
+        <div style={{ marginTop: 20, background: COLORS.greenDim, border: "1px solid " + COLORS.green + "40", borderRadius: 10, padding: "14px 20px" }}>
+          <div style={{ color: COLORS.green, fontWeight: 700, fontSize: 14 }}>{appliedIds.length} application{appliedIds.length > 1 ? "s" : ""} submitted</div>
+          <div style={{ color: COLORS.textMuted, fontSize: 12 }}>AI tailored your resume for each role</div>
         </div>
       )}
 
