@@ -1,3 +1,4 @@
+import { callClaude } from "./api.js";
 import React, { useState, useCallback } from "react";
 import ResumeScorer from "./ResumeScorer";
 
@@ -8,7 +9,8 @@ const COLORS = {
   text: "#e6edf3", textMuted: "#7d8590", textDim: "#484f58",
 };
 
-const callClaude = async (prompt, system) => {
+// callClaude moved to api.js
+const _unused = async (prompt, system) => {
   const res = await fetch("/api/claude", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
