@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from "react";
+import ResumeScorer from "./ResumeScorer";
 
 const COLORS = {
   bg: "#0a0b0d", surface: "#111318", card: "#161b22", border: "#21262d",
@@ -98,6 +99,43 @@ const iStyle = {
 
 const lStyle = { display: "block", color: COLORS.textMuted, fontSize: 11, letterSpacing: "0.07em", marginBottom: 6, fontWeight: 600 };
 
+function HomeScreen({ onNavigate }) {
+  return (
+    <div style={{ textAlign: "center", padding: "80px 0" }}>
+      <div style={{ fontSize: 56, marginBottom: 16 }}>⚡</div>
+      <h1 style={{ color: COLORS.text, fontSize: 32, fontWeight: 800, margin: "0 0 12px", letterSpacing: "-0.02em" }}>ApplyAI</h1>
+      <p style={{ color: COLORS.textMuted, fontSize: 16, margin: "0 0 48px" }}>Your AI-powered career platform</p>
+      <div style={{ display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap" }}>
+        <button onClick={() => onNavigate("setup")} style={{
+          padding: "18px 36px", background: COLORS.accent, color: "#0a0b0d",
+          border: "none", borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: "pointer",
+        }}>
+          Find Jobs with AI
+        </button>
+        <button onClick={() => onNavigate("scorer")} style={{
+          padding: "18px 36px", background: "transparent", color: COLORS.accent,
+          border: "1px solid " + COLORS.accent + "40", borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: "pointer",
+        }}>
+          Score My Resume
+        </button>
+      </div>
+      <div style={{ display: "flex", gap: 32, justifyContent: "center", marginTop: 64, flexWrap: "wrap" }}>
+        {[
+          { icon: "🤖", title: "AI Job Matching", desc: "Find jobs matched to your skills" },
+          { icon: "📄", title: "ATS Resume Scorer", desc: "Know your screen likelihood" },
+          { icon: "⚡", title: "One-Click Apply", desc: "AI tailors resume per job" },
+        ].map((f) => (
+          <div key={f.title} style={{ background: COLORS.card, border: "1px solid " + COLORS.border, borderRadius: 12, padding: "24px 28px", maxWidth: 200, textAlign: "center" }}>
+            <div style={{ fontSize: 28, marginBottom: 10 }}>{f.icon}</div>
+            <div style={{ color: COLORS.text, fontWeight: 700, fontSize: 14, marginBottom: 6 }}>{f.title}</div>
+            <div style={{ color: COLORS.textMuted, fontSize: 12, lineHeight: 1.5 }}>{f.desc}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function SetupStep({ onNext }) {
   const [skills, setSkills] = useState(["React", "Node.js", "TypeScript"]);
   const [input, setInput] = useState("");
@@ -114,24 +152,23 @@ function SetupStep({ onNext }) {
   return (
     <div style={{ maxWidth: 620, margin: "0 auto" }}>
       <div style={{ marginBottom: 32, textAlign: "center" }}>
-        <div style={{ fontSize: 36, marginBottom: 8 }}>⚡</div>
         <h2 style={{ color: COLORS.text, margin: "0 0 6px", fontSize: 22, fontWeight: 700 }}>Configure Your Profile</h2>
         <p style={{ color: COLORS.textMuted, margin: 0, fontSize: 14 }}>AI will tailor your resume and apply to matching jobs automatically</p>
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 20 }}>
         <div>
-          <label style={lStyle}>Target Role</label>
+          <label style={lStyle}>TARGET ROLE</label>
           <input value={role} onChange={e => setRole(e.target.value)} style={iStyle} placeholder="e.g. Software Engineer" />
         </div>
         <div>
-          <label style={lStyle}>Experience Level</label>
+          <label style={lStyle}>EXPERIENCE LEVEL</label>
           <select value={exp} onChange={e => setExp(e.target.value)} style={{ ...iStyle, cursor: "pointer" }}>
             {["Entry-level", "Mid-level", "Senior", "Lead / Manager"].map(o => <option key={o}>{o}</option>)}
           </select>
         </div>
       </div>
       <div style={{ marginBottom: 20 }}>
-        <label style={lStyle}>Your Skills</label>
+        <label style={lStyle}>YOUR SKILLS</label>
         <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
           <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === "Enter" && addSkill()} style={{ ...iStyle, flex: 1 }} placeholder="Add a skill, press Enter" />
           <Btn onClick={addSkill} variant="secondary">Add</Btn>
@@ -141,7 +178,7 @@ function SetupStep({ onNext }) {
         </div>
       </div>
       <div style={{ marginBottom: 24 }}>
-        <label style={lStyle}>Base Resume</label>
+        <label style={lStyle}>BASE RESUME</label>
         <textarea value={resume} onChange={e => setResume(e.target.value)} rows={10} style={{ ...iStyle, fontFamily: "monospace", fontSize: 12, lineHeight: 1.6, resize: "vertical" }} />
       </div>
       <Btn onClick={() => onNext({ skills, resume, role, exp })} style={{ width: "100%", justifyContent: "center", padding: "12px 24px", fontSize: 14 }}>
@@ -350,7 +387,7 @@ Return ONLY valid JSON array, no markdown:
 }
 
 export default function App() {
-  const [step, setStep] = useState("setup");
+  const [step, setStep] = useState("home");
   const [profile, setProfile] = useState(null);
 
   return (
@@ -358,27 +395,22 @@ export default function App() {
       <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
       <div style={{ borderBottom: "1px solid " + COLORS.border, background: COLORS.surface }}>
         <div style={{ maxWidth: 800, margin: "0 auto", padding: "14px 24px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div style={{ width: 28, height: 28, background: COLORS.accent, borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>A</div>
+          <div onClick={() => setStep("home")} style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}>
+            <div style={{ width: 28, height: 28, background: COLORS.accent, borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>⚡</div>
             <span style={{ fontWeight: 800, fontSize: 16 }}>ApplyAI</span>
             <Badge color={COLORS.accent}>Beta</Badge>
           </div>
-          <div style={{ display: "flex", gap: 6 }}>
-            {["setup", "jobs"].map((s, i) => (
-              <div key={s} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: step === s ? COLORS.accent : COLORS.textDim }}>
-                <div style={{ width: 20, height: 20, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700, background: step === s ? COLORS.accent : COLORS.border, color: step === s ? "#0a0b0d" : COLORS.textDim }}>
-                  {i + 1}
-                </div>
-                {s === "setup" ? "Profile" : "Jobs"}
-                {i === 0 && <span style={{ color: COLORS.border, margin: "0 2px" }}>-</span>}
-              </div>
-            ))}
+          <div style={{ display: "flex", gap: 8 }}>
+            <Btn onClick={() => setStep("setup")} variant="ghost" style={{ fontSize: 12, padding: "6px 12px" }}>Find Jobs</Btn>
+            <Btn onClick={() => setStep("scorer")} variant="secondary" style={{ fontSize: 12, padding: "6px 12px" }}>Score Resume</Btn>
           </div>
         </div>
       </div>
       <div style={{ maxWidth: 800, margin: "0 auto", padding: "32px 24px" }}>
+        {step === "home" && <HomeScreen onNavigate={setStep} />}
         {step === "setup" && <SetupStep onNext={(p) => { setProfile(p); setStep("jobs"); }} />}
-        {step === "jobs" && profile && <JobsStep profile={profile} onBack={() => setStep("setup")} />}
+        {step === "jobs" && profile && <JobsStep profile={profile} onBack={() => setStep("home")} />}
+        {step === "scorer" && <ResumeScorer onBack={() => setStep("home")} />}
       </div>
     </div>
   );
