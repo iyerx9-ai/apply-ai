@@ -189,7 +189,7 @@ function JobsStep({ profile, onBack }) {
     setJobs([]);
     try {
       const raw = await callClaude(
-        `Generate 6 realistic job openings for a ${profile.exp} ${profile.role} with skills: ${profile.skills.join(", ")}.
+        `Generate 3 realistic job openings for a ${profile.exp} ${profile.role} with skills: ${profile.skills.join(", ")}.
 Return ONLY a valid JSON array, no markdown, no explanation, no extra text:
 [{"id":"j1","title":"...","company":"...","location":"...","type":"Remote","salary":"$X-$Y/yr","match":85,"tags":["skill1"],"posted":"2 days ago","desc":"Short description.","requirements":["req1","req2","req3"]}]`,
         "Return only a raw JSON array. No markdown. No extra text before or after."
