@@ -1,4 +1,6 @@
 import { callClaude } from "./api.js";
+import Auth from "./Auth";
+import { supabase } from "./supabase";
 import React, { useState, useCallback } from "react";
 import ResumeScorer from "./ResumeScorer";
 
@@ -368,8 +370,10 @@ Return ONLY a valid JSON array, no markdown, no explanation, no extra text:
 }
 
 export default function App() {
+  const [user, setUser] = useState(null);
   const [step, setStep] = useState("home");
   const [profile, setProfile] = useState(null);
+  if (!user) return <Auth onLogin={setUser} />;
 
   return (
     <div style={{ minHeight: "100vh", background: COLORS.bg, fontFamily: "'DM Sans', 'Segoe UI', sans-serif", color: COLORS.text }}>
@@ -380,6 +384,10 @@ export default function App() {
             <div style={{ width: 28, height: 28, background: COLORS.accent, borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>⚡</div>
             <span style={{ fontWeight: 800, fontSize: 16 }}>ApplyAI</span>
             <Badge color={COLORS.accent}>Beta</Badge>
+          </div>
+          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            <span style={{ color: COLORS.textMuted, fontSize: 12 }}>{user?.email}</span>
+            <Btn onClick={() => { supabase.auth.signOut(); setUser(null); }} variant="ghost" style={{ fontSize: 12, padding: "4px 10px" }}>Sign Out</Btn>
           </div>
           <div style={{ display: "flex", gap: 8 }}>
             <Btn onClick={() => setStep("setup")} variant="ghost" style={{ fontSize: 12, padding: "6px 12px" }}>Find Jobs</Btn>
