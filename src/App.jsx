@@ -152,7 +152,7 @@ const LocationSearch = ({ value, onChange }) => {
         placeholder="Type any city, country or Remote..."
       />
       <div style={{ fontSize: 10, color: "#484f58", marginTop: 3 }}>Type any city worldwide — e.g. Lagos, Tokyo, Remote</div>
-      {open && filtered.length > 0 && (
+      {open && (filtered.length > 0 || query.length > 0) && (
         <div style={{ position: "absolute", top: "100%", left: 0, right: 0, background: "#161b22", border: "1px solid #21262d", borderRadius: 7, zIndex: 100, maxHeight: 220, overflowY: "auto" }}>
           {filtered.map(l => (
             <div key={l} onMouseDown={() => { setQuery(l); onChange(l); setOpen(false); }}
@@ -162,10 +162,10 @@ const LocationSearch = ({ value, onChange }) => {
               {l}
             </div>
           ))}
-          {query.length > 0 && !LOCATIONS.find(l => l.toLowerCase() === query.toLowerCase()) && (
+          {query.length > 0 && (
             <div onMouseDown={() => { onChange(query); setOpen(false); }}
-              style={{ padding: "9px 14px", color: "#f0b429", fontSize: 13, cursor: "pointer", borderTop: "1px solid #21262d" }}>
-              Search "{query}" →
+              style={{ padding: "9px 14px", color: "#f0b429", fontSize: 13, cursor: "pointer", borderTop: "1px solid #21262d", fontWeight: 600 }}>
+              🔍 Search "{query}" anywhere →
             </div>
           )}
         </div>
