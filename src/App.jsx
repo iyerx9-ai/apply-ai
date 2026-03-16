@@ -3,6 +3,8 @@ import Auth from "./Auth";
 import { supabase } from "./supabase";
 import React, { useState, useCallback } from "react";
 import ResumeScorer from "./ResumeScorer";
+import Paywall from "./Paywall";
+import { incrementSearch, incrementApplication } from "./usageLimits";
 
 const COLORS = {
   bg: "#0a0b0d", surface: "#111318", card: "#161b22", border: "#21262d",
@@ -170,7 +172,7 @@ function SetupStep({ onNext }) {
   );
 }
 
-function JobsStep({ profile, onBack }) {
+function JobsStep({ profile, onBack, user }) {
   const [jobs, setJobs] = useState([]);
   const [fetching, setFetching] = useState(false);
   const [previewJob, setPreviewJob] = useState(null);
@@ -180,6 +182,7 @@ function JobsStep({ profile, onBack }) {
   const [appliedIds, setAppliedIds] = useState([]);
   const [statusMsg, setStatusMsg] = useState("");
   const [toast, setToast] = useState(null);
+  const [showPaywall, setShowPaywall] = useState(false);
 
   const showToast = (msg, type = "success") => {
     setToast({ msg, type });
@@ -187,6 +190,10 @@ function JobsStep({ profile, onBack }) {
   };
 
   const fetchJobs = useCallback(async () => {
+    if (user) {
+      const result = await incrementSearch(user.id);
+      if (!result.allowed) { setShowPaywall(true); return; }
+    }
     setFetching(true);
     setJobs([]);
     try {
@@ -320,6 +327,7 @@ Return ONLY a valid JSON array, no markdown, no explanation, no extra text:
         })}
       </div>
 
+      {showPaywall && <Paywall onClose={() => setShowPaywall(false)} reason="searches" />}
       {appliedIds.length > 0 && (
         <div style={{ marginTop: 20, background: COLORS.greenDim, border: "1px solid " + COLORS.green + "40", borderRadius: 10, padding: "14px 20px" }}>
           <div style={{ color: COLORS.green, fontWeight: 700, fontSize: 14 }}>{appliedIds.length} application{appliedIds.length > 1 ? "s" : ""} submitted</div>
@@ -398,7 +406,7 @@ export default function App() {
       <div style={{ maxWidth: 800, margin: "0 auto", padding: "32px 24px" }}>
         {step === "home" && <HomeScreen onNavigate={setStep} />}
         {step === "setup" && <SetupStep onNext={(p) => { setProfile(p); setStep("jobs"); }} />}
-        {step === "jobs" && profile && <JobsStep profile={profile} onBack={() => setStep("home")} />}
+        {step === "jobs" && profile && <JobsStep profile={profile} onBack={() => setStep("home")} user={user} />}
         {step === "scorer" && <ResumeScorer onBack={() => setStep("home")} />}
       </div>
     </div>
