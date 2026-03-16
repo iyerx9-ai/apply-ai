@@ -260,7 +260,7 @@ function JobsStep({ profile, onBack, user }) {
       const res = await fetch("/api/jobs", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query: profile.role, location: profile.location || "" }),
+        body: JSON.stringify({ query: profile.role, location: profile.location || "", skills: profile.skills }),
       });
       const data = await res.json();
       console.log("API response:", JSON.stringify(data).slice(0,200));
