@@ -327,7 +327,7 @@ Return ONLY a valid JSON array, no markdown, no explanation, no extra text:
         })}
       </div>
 
-      {showPaywall && <Paywall onClose={() => setShowPaywall(false)} reason="searches" />}
+      {showPaywall && <Paywall onClose={() => setShowPaywall(false)} reason="searches" user={user} onUpgradeSuccess={() => { setShowPaywall(false); }} />}
       {appliedIds.length > 0 && (
         <div style={{ marginTop: 20, background: COLORS.greenDim, border: "1px solid " + COLORS.green + "40", borderRadius: 10, padding: "14px 20px" }}>
           <div style={{ color: COLORS.green, fontWeight: 700, fontSize: 14 }}>{appliedIds.length} application{appliedIds.length > 1 ? "s" : ""} submitted</div>

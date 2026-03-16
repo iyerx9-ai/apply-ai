@@ -3,7 +3,35 @@ const COLORS = {
   accent: "#f0b429", green: "#3fb950", text: "#e6edf3", textMuted: "#7d8590",
 };
 
-export default function Paywall({ onClose, reason = "searches" }) {
+const RAZORPAY_KEY = "rzp_test_SRvMY2wbn2yCMi";
+
+export default function Paywall({ onClose, reason = "searches", user, onUpgradeSuccess }) {
+  const handlePayment = () => {
+    const options = {
+      key: RAZORPAY_KEY,
+      amount: 49900,
+      currency: "INR",
+      name: "ApplyAI",
+      description: "Pro Plan - Monthly",
+      image: "https://apply-ai-alpha.vercel.app/favicon.ico",
+      prefill: {
+        email: user?.email || "",
+      },
+      theme: { color: "#f0b429" },
+      handler: function (response) {
+        console.log("Payment success:", response);
+        if (onUpgradeSuccess) onUpgradeSuccess(response);
+      },
+      modal: {
+        ondismiss: function () {
+          console.log("Payment dismissed");
+        }
+      }
+    };
+    const rzp = new window.Razorpay(options);
+    rzp.open();
+  };
+
   return (
     <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "#000000cc", zIndex: 2000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
       <div onClick={e => e.stopPropagation()} style={{ background: COLORS.card, border: "1px solid " + COLORS.border, borderRadius: 16, width: "100%", maxWidth: 440, padding: 36, textAlign: "center" }}>
@@ -23,7 +51,7 @@ export default function Paywall({ onClose, reason = "searches" }) {
             </div>
           ))}
         </div>
-        <button style={{
+        <button onClick={handlePayment} style={{
           width: "100%", padding: "14px", background: COLORS.accent, color: "#0a0b0d",
           border: "none", borderRadius: 8, fontSize: 15, fontWeight: 800, cursor: "pointer", marginBottom: 12,
         }}>
