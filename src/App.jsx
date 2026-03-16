@@ -190,7 +190,7 @@ function JobsStep({ profile, onBack, user }) {
   };
 
   const fetchJobs = useCallback(async (countUsage = true) => {
-    if (user && countUsage) {
+    if (false && user && countUsage) {
       const result = await incrementSearch(user.id);
       if (!result.allowed) { setShowPaywall(true); return; }
     }
@@ -201,9 +201,10 @@ function JobsStep({ profile, onBack, user }) {
       const res = await fetch("/api/jobs", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query: `${profile.exp} ${profile.role}`, location: "" }),
+        body: JSON.stringify({ query: profile.role, location: "" }),
       });
       const data = await res.json();
+      console.log("API response:", JSON.stringify(data).slice(0,200));
       const jobs = (data.data || []).slice(0, 6).map((j, i) => ({
         id: j.job_id || `j${i}`,
         title: j.job_title,

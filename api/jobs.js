@@ -14,7 +14,7 @@ export default async function handler(req, res) {
       {
         headers: {
           "x-rapidapi-host": "jsearch.p.rapidapi.com",
-          "x-rapidapi-key": process.env.RAPIDAPI_KEY,
+          "x-rapidapi-key": "b68e29749fmsh69cb709c731ae1cp1ec3abjsnbc01fd65eea3",
         },
       }
     );
