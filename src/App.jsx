@@ -190,7 +190,7 @@ function JobsStep({ profile, onBack, user }) {
   };
 
   const fetchJobs = useCallback(async (countUsage = true) => {
-    if (false && user && countUsage) {
+    if (user && countUsage) {
       const result = await incrementSearch(user.id);
       if (!result.allowed) { setShowPaywall(true); return; }
     }
