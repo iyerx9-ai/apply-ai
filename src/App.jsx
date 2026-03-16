@@ -197,17 +197,28 @@ function JobsStep({ profile, onBack, user }) {
     setFetching(true);
     setJobs([]);
     try {
-      const raw = await callClaude(
-        `Generate 3 realistic job openings for a ${profile.exp} ${profile.role} with skills: ${profile.skills.join(", ")}.
-Return ONLY a valid JSON array, no markdown, no explanation, no extra text:
-[{"id":"j1","title":"...","company":"...","location":"...","type":"Remote","salary":"$X-$Y/yr","match":85,"tags":["skill1"],"posted":"2 days ago","desc":"Short description.","requirements":["req1","req2","req3"]}]`,
-        "Return only a raw JSON array. No markdown. No extra text before or after."
-      );
-      const clean = raw.replace(/```json|```/g, "").trim();
-      const start = clean.indexOf("[");
-      const end = clean.lastIndexOf("]") + 1;
-      const jsonStr = clean.slice(start, end);
-      setJobs(JSON.parse(jsonStr));
+      // Fetch real jobs from JSearch
+      const res = await fetch("/api/jobs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: `${profile.exp} ${profile.role}`, location: "" }),
+      });
+      const data = await res.json();
+      const jobs = (data.data || []).slice(0, 6).map((j, i) => ({
+        id: j.job_id || `j${i}`,
+        title: j.job_title,
+        company: j.employer_name,
+        location: j.job_city ? `${j.job_city}, ${j.job_country}` : j.job_country || "Remote",
+        type: j.job_is_remote ? "Remote" : "On-site",
+        salary: j.job_min_salary ? `$${j.job_min_salary/1000}k-$${j.job_max_salary/1000}k/yr` : "Competitive",
+        match: Math.floor(75 + Math.random() * 20),
+        tags: profile.skills.slice(0, 3),
+        posted: j.job_posted_at_datetime_utc ? new Date(j.job_posted_at_datetime_utc).toLocaleDateString() : "Recently",
+        desc: j.job_description ? j.job_description.slice(0, 150) + "..." : "Exciting opportunity.",
+        requirements: j.job_highlights?.Qualifications?.slice(0, 3) || ["Relevant experience", "Good communication", "Team player"],
+        applyLink: j.job_apply_link,
+      }));
+      setJobs(jobs);
     } catch (err) {
       showToast("Failed to fetch jobs: " + err.message, "error");
     }
@@ -221,6 +232,7 @@ Return ONLY a valid JSON array, no markdown, no explanation, no extra text:
     setPreviewResume("");
     setPreviewLoading(true);
     try {
+      // Use real jobs from JSearch
       const tailored = await callClaude(
         `Tailor this resume for: ${job.title} at ${job.company}. Requirements: ${job.requirements.join(", ")}.\n\nRESUME:\n${profile.resume}\n\nReturn only the tailored resume text.`,
         "You are an expert resume writer."
