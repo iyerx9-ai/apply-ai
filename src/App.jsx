@@ -146,9 +146,6 @@ function SetupStep({ onNext }) {
           <input value={role} onChange={e => setRole(e.target.value)} style={iStyle} placeholder="e.g. Software Engineer" />
         </div>
         <div>
-          <label style={lStyle}>EXPERIENCE LEVEL</label>
-          </div>
-        <div>
           <label style={lStyle}>LOCATION</label>
           <select value={location} onChange={e => setLocation(e.target.value)}  style={{ ...iStyle, cursor: "pointer" }}>
             {["Bengaluru", "Mumbai", "Delhi", "Hyderabad", "Chennai", "Pune", "Remote", "Anywhere in India", "USA", "UK", "Singapore"].map(o => <option key={o}>{o}</option>)}
