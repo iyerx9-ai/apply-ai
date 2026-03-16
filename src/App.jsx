@@ -125,6 +125,7 @@ function SetupStep({ onNext }) {
   const [input, setInput] = useState("");
   const [resume, setResume] = useState(SAMPLE_RESUME);
   const [role, setRole] = useState("Software Engineer");
+  const [location, setLocation] = useState("Bengaluru");
   const [exp, setExp] = useState("Mid-level");
 
   const addSkill = () => {
@@ -143,6 +144,15 @@ function SetupStep({ onNext }) {
         <div>
           <label style={lStyle}>TARGET ROLE</label>
           <input value={role} onChange={e => setRole(e.target.value)} style={iStyle} placeholder="e.g. Software Engineer" />
+        </div>
+        <div>
+          <label style={lStyle}>EXPERIENCE LEVEL</label>
+          </div>
+        <div>
+          <label style={lStyle}>LOCATION</label>
+          <select value={location} onChange={e => setLocation(e.target.value)}  style={{ ...iStyle, cursor: "pointer" }}>
+            {["Bengaluru", "Mumbai", "Delhi", "Hyderabad", "Chennai", "Pune", "Remote", "Anywhere in India", "USA", "UK", "Singapore"].map(o => <option key={o}>{o}</option>)}
+          </select>
         </div>
         <div>
           <label style={lStyle}>EXPERIENCE LEVEL</label>
@@ -165,7 +175,7 @@ function SetupStep({ onNext }) {
         <label style={lStyle}>BASE RESUME</label>
         <textarea value={resume} onChange={e => setResume(e.target.value)} rows={10} style={{ ...iStyle, fontFamily: "monospace", fontSize: 12, lineHeight: 1.6, resize: "vertical" }} />
       </div>
-      <Btn onClick={() => onNext({ skills, resume, role, exp })} style={{ width: "100%", justifyContent: "center", padding: "12px 24px", fontSize: 14 }}>
+      <Btn onClick={() => onNext({ skills, resume, role, exp, location })} style={{ width: "100%", justifyContent: "center", padding: "12px 24px", fontSize: 14 }}>
         Find Matching Jobs
       </Btn>
     </div>
@@ -201,7 +211,7 @@ function JobsStep({ profile, onBack, user }) {
       const res = await fetch("/api/jobs", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query: profile.role, location: "" }),
+        body: JSON.stringify({ query: profile.role, location: profile.location || "" }),
       });
       const data = await res.json();
       console.log("API response:", JSON.stringify(data).slice(0,200));
@@ -355,6 +365,18 @@ function JobsStep({ profile, onBack, user }) {
               <Badge color={COLORS.blue}>{previewJob.location}</Badge>
               <Badge color={COLORS.accent}>{previewJob.salary}</Badge>
               <Badge color={mc(previewJob.match)}>{previewJob.match}% match</Badge>
+            </div>
+            <div style={{ marginBottom: 20 }}>
+              <h4 style={{ color: COLORS.textMuted, fontSize: 11, letterSpacing: "0.08em", marginBottom: 8 }}>JOB DESCRIPTION</h4>
+              <p style={{ color: COLORS.textMuted, fontSize: 13, lineHeight: 1.7, margin: 0 }}>{previewJob.desc}</p>
+            </div>
+            <div style={{ marginBottom: 20 }}>
+              <h4 style={{ color: COLORS.textMuted, fontSize: 11, letterSpacing: "0.08em", marginBottom: 8 }}>REQUIRED SKILLS</h4>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                {previewJob.tags?.map((t, i) => (
+                  <span key={i} style={{ background: COLORS.accentDim, border: "1px solid " + COLORS.accent + "40", color: COLORS.accent, padding: "4px 12px", borderRadius: 20, fontSize: 12 }}>{t}</span>
+                ))}
+              </div>
             </div>
             <div style={{ marginBottom: 20 }}>
               <h4 style={{ color: COLORS.textMuted, fontSize: 11, letterSpacing: "0.08em", marginBottom: 8 }}>REQUIREMENTS</h4>
