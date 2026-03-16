@@ -189,8 +189,8 @@ function JobsStep({ profile, onBack, user }) {
     setTimeout(() => setToast(null), 3500);
   };
 
-  const fetchJobs = useCallback(async () => {
-    if (user) {
+  const fetchJobs = useCallback(async (countUsage = true) => {
+    if (user && countUsage) {
       const result = await incrementSearch(user.id);
       if (!result.allowed) { setShowPaywall(true); return; }
     }
@@ -214,7 +214,7 @@ Return ONLY a valid JSON array, no markdown, no explanation, no extra text:
     setFetching(false);
   }, [profile]);
 
-  useState(() => { fetchJobs(); }, []);
+  useState(() => { fetchJobs(false); }, []);
 
   const handlePreview = async (job) => {
     setPreviewJob(job);
