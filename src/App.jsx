@@ -140,7 +140,7 @@ const LOCATIONS = [
 const LocationSearch = ({ value, onChange }) => {
   const [query, setQuery] = useState(value || "");
   const [open, setOpen] = useState(false);
-  const filtered = LOCATIONS.filter(l => l.toLowerCase().includes(query.toLowerCase())).slice(0, 8);
+  const filtered = query.length > 0 ? LOCATIONS.filter(l => l.toLowerCase().includes(query.toLowerCase())).slice(0, 8) : LOCATIONS.slice(0, 8);
   return (
     <div style={{ position: "relative" }}>
       <input
@@ -149,8 +149,9 @@ const LocationSearch = ({ value, onChange }) => {
         onFocus={() => setOpen(true)}
         onBlur={() => setTimeout(() => setOpen(false), 150)}
         style={iStyle}
-        placeholder="Search city or country..."
+        placeholder="Type any city, country or Remote..."
       />
+      <div style={{ fontSize: 10, color: "#484f58", marginTop: 3 }}>Type any city worldwide — e.g. Lagos, Tokyo, Remote</div>
       {open && filtered.length > 0 && (
         <div style={{ position: "absolute", top: "100%", left: 0, right: 0, background: "#161b22", border: "1px solid #21262d", borderRadius: 7, zIndex: 100, maxHeight: 220, overflowY: "auto" }}>
           {filtered.map(l => (
@@ -161,6 +162,12 @@ const LocationSearch = ({ value, onChange }) => {
               {l}
             </div>
           ))}
+          {query.length > 0 && !LOCATIONS.find(l => l.toLowerCase() === query.toLowerCase()) && (
+            <div onMouseDown={() => { onChange(query); setOpen(false); }}
+              style={{ padding: "9px 14px", color: "#f0b429", fontSize: 13, cursor: "pointer", borderTop: "1px solid #21262d" }}>
+              Search "{query}" →
+            </div>
+          )}
         </div>
       )}
     </div>
