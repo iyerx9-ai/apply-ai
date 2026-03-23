@@ -498,7 +498,14 @@ export default function App() {
         {step === "refund" && <RefundPage />}
         {step === "contact" && <ContactPage />}
       </div>
+      <div style={{ borderTop: "1px solid #21262d", marginTop: 40, padding: "20px 24px", textAlign: "center" }}>
+        <div style={{ display: "flex", gap: 24, justifyContent: "center", flexWrap: "wrap" }}>
+          {[["Terms", "terms"], ["Refund Policy", "refund"], ["Contact", "contact"]].map(([label, s]) => (
+            <span key={s} onClick={() => setStep(s)} style={{ color: "#7d8590", fontSize: 12, cursor: "pointer" }}>{label}</span>
+          ))}
+        </div>
+        <p style={{ color: "#484f58", fontSize: 11, margin: "8px 0 0" }}>© 2026 ApplyAI. All rights reserved.</p>
+      </div>
     </div>
   );
 }
-// Footer component
