@@ -3,33 +3,10 @@ const COLORS = {
   accent: "#f0b429", green: "#3fb950", text: "#e6edf3", textMuted: "#7d8590",
 };
 
-const RAZORPAY_KEY = "rzp_test_SRvMY2wbn2yCMi";
-
 export default function Paywall({ onClose, reason = "searches", user, onUpgradeSuccess }) {
   const handlePayment = () => {
-    const options = {
-      key: RAZORPAY_KEY,
-      amount: 49900,
-      currency: "INR",
-      name: "ApplyAI",
-      description: "Pro Plan - Monthly",
-      image: "https://apply-ai-alpha.vercel.app/favicon.ico",
-      prefill: {
-        email: user?.email || "",
-      },
-      theme: { color: "#f0b429" },
-      handler: function (response) {
-        console.log("Payment success:", response);
-        if (onUpgradeSuccess) onUpgradeSuccess(response);
-      },
-      modal: {
-        ondismiss: function () {
-          console.log("Payment dismissed");
-        }
-      }
-    };
-    const rzp = new window.Razorpay(options);
-    rzp.open();
+    window.open("https://www.instamojo.com/@iyerx9", "_blank");
+    if (onUpgradeSuccess) onUpgradeSuccess();
   };
 
   return (
