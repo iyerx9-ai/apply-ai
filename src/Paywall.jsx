@@ -5,7 +5,7 @@ const COLORS = {
 
 export default function Paywall({ onClose, reason = "searches", user, onUpgradeSuccess }) {
   const handlePayment = () => {
-    window.open("https://www.instamojo.com/@iyerx9", "_blank");
+    window.open("https://imjo.in/MKyfkZ", "_blank");
     if (onUpgradeSuccess) onUpgradeSuccess();
   };
 
