@@ -311,12 +311,18 @@ function JobsStep({ profile, onBack, user }) {
     await new Promise(r => setTimeout(r, 900));
     setStatusMsg("Scanning requirements...");
     await new Promise(r => setTimeout(r, 700));
-    setStatusMsg("Submitting application...");
-    await new Promise(r => setTimeout(r, 800));
+    setStatusMsg("Opening application...");
+    await new Promise(r => setTimeout(r, 500));
     setAppliedIds(prev => [...prev, job.id]);
     setApplyingId(null);
     setStatusMsg("");
-    showToast("Applied to " + job.title + " at " + job.company + "!");
+    // Open real job URL
+    if (job.applyLink) {
+      window.open(job.applyLink, "_blank");
+      showToast("Opening " + job.title + " at " + job.company + "!");
+    } else {
+      showToast("Applied to " + job.title + " at " + job.company + "!");
+    }
   };
 
   const mc = (n) => n >= 85 ? COLORS.green : n >= 70 ? COLORS.accent : COLORS.blue;
