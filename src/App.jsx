@@ -1,4 +1,5 @@
 import { callClaude } from "./api.js";
+import { TermsPage, RefundPage, ContactPage } from "./Legal";
 import Auth from "./Auth";
 import { supabase } from "./supabase";
 import React, { useState, useCallback } from "react";
@@ -461,6 +462,7 @@ function JobsStep({ profile, onBack, user }) {
   );
 }
 
+// Footer added below
 export default function App() {
   const [user, setUser] = useState(null);
   const [step, setStep] = useState("home");
@@ -492,7 +494,11 @@ export default function App() {
         {step === "setup" && <SetupStep onNext={(p) => { setProfile(p); setStep("jobs"); }} />}
         {step === "jobs" && profile && <JobsStep profile={profile} onBack={() => setStep("home")} user={user} />}
         {step === "scorer" && <ResumeScorer onBack={() => setStep("home")} />}
+        {step === "terms" && <TermsPage />}
+        {step === "refund" && <RefundPage />}
+        {step === "contact" && <ContactPage />}
       </div>
     </div>
   );
 }
+// Footer component
