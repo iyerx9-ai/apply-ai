@@ -1,5 +1,5 @@
 import { callClaude } from "./api.js";
-import { TermsPage, RefundPage, ContactPage } from "./Legal";
+import { TermsPage, RefundPage, ContactPage, AboutPage } from "./Legal";
 import Auth from "./Auth";
 import { supabase } from "./supabase";
 import React, { useState, useCallback } from "react";
@@ -501,12 +501,13 @@ export default function App() {
         {step === "jobs" && profile && <JobsStep profile={profile} onBack={() => setStep("home")} user={user} />}
         {step === "scorer" && <ResumeScorer onBack={() => setStep("home")} />}
         {step === "terms" && <TermsPage />}
+        {step === "about" && <AboutPage />}
         {step === "refund" && <RefundPage />}
         {step === "contact" && <ContactPage />}
       </div>
       <div style={{ borderTop: "1px solid #21262d", marginTop: 40, padding: "20px 24px", textAlign: "center" }}>
         <div style={{ display: "flex", gap: 24, justifyContent: "center", flexWrap: "wrap" }}>
-          {[["Terms", "terms"], ["Refund Policy", "refund"], ["Contact", "contact"]].map(([label, s]) => (
+          {[["About", "about"], ["Terms", "terms"], ["Refund Policy", "refund"], ["Contact", "contact"]].map(([label, s]) => (
             <span key={s} onClick={() => setStep(s)} style={{ color: "#7d8590", fontSize: 12, cursor: "pointer" }}>{label}</span>
           ))}
         </div>
