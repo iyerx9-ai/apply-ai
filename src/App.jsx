@@ -249,7 +249,22 @@ function SetupStep({ onNext }) {
       </div>
       <div style={{ marginBottom: 24 }}>
         <label style={lStyle}>BASE RESUME</label>
-        <textarea value={resume} onChange={e => setResume(e.target.value)} rows={10} style={{ ...iStyle, fontFamily: "monospace", fontSize: 12, lineHeight: 1.6, resize: "vertical" }} />
+        <div style={{ marginBottom: 8 }}>
+          <label style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "8px 16px", background: COLORS.surface, border: "1px solid " + COLORS.border, borderRadius: 7, cursor: "pointer", fontSize: 13, color: COLORS.textMuted }}>
+            📎 Upload CV (PDF, Word or Text)
+            <input type="file" accept=".pdf,.doc,.docx,.txt" style={{ display: "none" }} onChange={async (e) => {
+              const file = e.target.files[0];
+              if (!file) return;
+              if (file.type === "text/plain") {
+                const text = await file.text();
+                setResume(text);
+              } else {
+                setResume("Uploaded: " + file.name + "\nPlease paste your CV text below for best AI results.");
+              }
+            }} />
+          </label>
+        </div>
+        <textarea value={resume} onChange={e => setResume(e.target.value)} rows={10} style={{ ...iStyle, fontFamily: "monospace", fontSize: 12, lineHeight: 1.6, resize: "vertical" }} placeholder="Paste your CV here or upload above..." />
       </div>
       <Btn onClick={() => {
         if (user) saveProfile(user.id, { resume, role, location, skills });
