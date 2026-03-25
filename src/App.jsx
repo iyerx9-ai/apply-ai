@@ -1,5 +1,6 @@
 import { callClaude } from "./api.js";
 import CoverLetter from "./CoverLetter";
+import CookieBanner from "./CookieBanner";
 import { TermsPage, RefundPage, ContactPage, AboutPage, PrivacyPage } from "./Legal";
 import Auth from "./Auth";
 import { supabase } from "./supabase";
@@ -608,6 +609,7 @@ export default function App() {
 
   return (
     <div style={{ minHeight: "100vh", background: COLORS.bg, fontFamily: "'DM Sans', 'Segoe UI', sans-serif", color: COLORS.text }}>
+      <CookieBanner />
       <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
       <div style={{ borderBottom: "1px solid " + COLORS.border, background: COLORS.surface }}>
         <div style={{ maxWidth: 800, margin: "0 auto", padding: "14px 24px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
