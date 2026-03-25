@@ -1,6 +1,6 @@
 import { callClaude } from "./api.js";
 import CoverLetter from "./CoverLetter";
-import { TermsPage, RefundPage, ContactPage, AboutPage } from "./Legal";
+import { TermsPage, RefundPage, ContactPage, AboutPage, PrivacyPage } from "./Legal";
 import Auth from "./Auth";
 import { supabase } from "./supabase";
 import React, { useState, useCallback } from "react";
@@ -630,12 +630,13 @@ export default function App() {
         {step === "cover" && <CoverLetter onBack={() => setStep("home")} />}
         {step === "terms" && <TermsPage />}
         {step === "about" && <AboutPage />}
+        {step === "privacy" && <PrivacyPage />}
         {step === "refund" && <RefundPage />}
         {step === "contact" && <ContactPage />}
       </div>
       <div style={{ borderTop: "1px solid #21262d", marginTop: 40, padding: "20px 24px", textAlign: "center" }}>
         <div style={{ display: "flex", gap: 24, justifyContent: "center", flexWrap: "wrap" }}>
-          {[["About", "about"], ["Terms", "terms"], ["Refund Policy", "refund"], ["Contact", "contact"]].map(([label, s]) => (
+          {[["About", "about"], ["Privacy", "privacy"], ["Terms", "terms"], ["Refund Policy", "refund"], ["Contact", "contact"]].map(([label, s]) => (
             <span key={s} onClick={() => setStep(s)} style={{ color: "#7d8590", fontSize: 12, cursor: "pointer" }}>{label}</span>
           ))}
         </div>

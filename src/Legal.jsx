@@ -143,3 +143,82 @@ export function AboutPage() {
     </div>
   );
 }
+
+export function PrivacyPage() {
+  const C = {
+    text: "#e6edf3", textMuted: "#7d8590", accent: "#f0b429",
+    card: "#161b22", border: "#21262d",
+  };
+  return (
+    <div style={{ maxWidth: 800, margin: "0 auto", padding: "40px 24px", fontFamily: "'DM Sans', sans-serif", color: C.text }}>
+      <h1 style={{ fontSize: 28, fontWeight: 800, marginBottom: 8 }}>Privacy Policy</h1>
+      <p style={{ color: C.textMuted, marginBottom: 32 }}>Last updated: March 2026</p>
+
+      <div style={{ background: "#3fb95015", border: "1px solid #3fb95040", borderRadius: 10, padding: 16, marginBottom: 32 }}>
+        <div style={{ fontWeight: 700, marginBottom: 6 }}>🔒 Your Privacy in Plain English</div>
+        <div style={{ color: C.textMuted, fontSize: 13, lineHeight: 1.7 }}>
+          We collect only what we need to run the service. We never sell your data. Your CV is only visible to you. You can delete everything anytime.
+        </div>
+      </div>
+
+      {[
+        ["1. What Data We Collect", [
+          "Account information: email address and password (passwords are never stored — handled by Supabase Auth)",
+          "Profile data: your CV/resume text, target role, location, and skills that you provide",
+          "Usage data: job searches performed, applications submitted (to enforce free tier limits)",
+          "Payment data: handled entirely by Instamojo/payment providers — we never see your card details",
+        ]],
+        ["2. How We Use Your Data", [
+          "To provide job matching and AI resume tailoring services",
+          "To save your profile so you don't have to re-enter it each session",
+          "To enforce free tier limits (3 searches/month)",
+          "To improve our AI matching algorithms",
+          "We never use your data for advertising or sell it to third parties",
+        ]],
+        ["3. Data Storage and Security", [
+          "All data stored on Supabase — SOC 2 Type II certified infrastructure",
+          "All data encrypted in transit via HTTPS/TLS",
+          "Row Level Security (RLS) ensures only you can access your data",
+          "We have no access to your Supabase Auth passwords",
+          "CV data stored as text in our database — only accessible by you",
+        ]],
+        ["4. Data Sharing", [
+          "We do NOT sell your data to anyone",
+          "We do NOT share your CV with employers without your explicit action",
+          "We use Anthropic Claude API to process your CV — subject to Anthropic's privacy policy",
+          "We use JSearch API to fetch job listings — your search queries are sent to RapidAPI",
+          "Payment processing by Instamojo — subject to their privacy policy",
+        ]],
+        ["5. Your Rights", [
+          "Access: you can view all your data in your profile",
+          "Correction: you can update your CV and profile anytime",
+          "Deletion: email iyerx9@gmail.com to delete your account and all data permanently",
+          "Portability: email us to receive a copy of your data",
+          "Indian users: protected under the Digital Personal Data Protection Act (DPDP) 2023",
+          "EU users: protected under GDPR",
+        ]],
+        ["6. Cookies", [
+          "We use only essential cookies for authentication (Supabase session)",
+          "No advertising cookies, no tracking cookies",
+          "You cannot opt out of essential cookies as the site will not function without them",
+        ]],
+        ["7. Data Retention", [
+          "Account data retained until you delete your account",
+          "You can request deletion at any time by emailing iyerx9@gmail.com",
+          "Deleted accounts are permanently removed within 30 days",
+        ]],
+        ["8. Contact", [
+          "For privacy concerns: iyerx9@gmail.com",
+          "We respond to all privacy requests within 72 hours",
+        ]],
+      ].map(([title, points]) => (
+        <div key={title} style={{ marginBottom: 28 }}>
+          <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 12 }}>{title}</h2>
+          <ul style={{ margin: 0, paddingLeft: 20, color: C.textMuted, fontSize: 13, lineHeight: 2 }}>
+            {points.map((p, i) => <li key={i}>{p}</li>)}
+          </ul>
+        </div>
+      ))}
+    </div>
+  );
+}
