@@ -1,4 +1,5 @@
 import { callClaude } from "./api.js";
+import CoverLetter from "./CoverLetter";
 import { TermsPage, RefundPage, ContactPage, AboutPage } from "./Legal";
 import Auth from "./Auth";
 import { supabase } from "./supabase";
@@ -504,6 +505,7 @@ export default function App() {
           <div style={{ display: "flex", gap: 8 }}>
             <Btn onClick={() => setStep("setup")} variant="ghost" style={{ fontSize: 12, padding: "6px 12px" }}>Find Jobs</Btn>
             <Btn onClick={() => setStep("scorer")} variant="secondary" style={{ fontSize: 12, padding: "6px 12px" }}>Score Resume</Btn>
+            <Btn onClick={() => setStep("cover")} variant="ghost" style={{ fontSize: 12, padding: "6px 12px" }}>Cover Letter</Btn>
           </div>
         </div>
       </div>
@@ -512,6 +514,7 @@ export default function App() {
         {step === "setup" && <SetupStep onNext={(p) => { setProfile(p); setStep("jobs"); }} />}
         {step === "jobs" && profile && <JobsStep profile={profile} onBack={() => setStep("home")} user={user} />}
         {step === "scorer" && <ResumeScorer onBack={() => setStep("home")} />}
+        {step === "cover" && <CoverLetter onBack={() => setStep("home")} />}
         {step === "terms" && <TermsPage />}
         {step === "about" && <AboutPage />}
         {step === "refund" && <RefundPage />}
