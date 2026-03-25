@@ -8,6 +8,31 @@ import ResumeScorer from "./ResumeScorer";
 import Paywall from "./Paywall";
 import { incrementSearch, incrementApplication } from "./usageLimits";
 
+const saveProfile = async (userId, profile) => {
+  const { supabase } = await import('./supabase');
+  await supabase.from('profiles').upsert({
+    id: userId,
+    resume: profile.resume,
+    role: profile.role,
+    location: profile.location,
+    skills: JSON.stringify(profile.skills),
+  });
+};
+
+const loadProfile = async (userId) => {
+  const { supabase } = await import('./supabase');
+  const { data } = await supabase.from('profiles').select('*').eq('id', userId).single();
+  if (data) {
+    return {
+      resume: data.resume || '',
+      role: data.role || '',
+      location: data.location || '',
+      skills: data.skills ? JSON.parse(data.skills) : [],
+    };
+  }
+  return null;
+};
+
 const COLORS = {
   bg: "#0a0b0d", surface: "#111318", card: "#161b22", border: "#21262d",
   accent: "#f0b429", accentDim: "#f0b42920", green: "#3fb950", greenDim: "#3fb95020",
@@ -226,7 +251,10 @@ function SetupStep({ onNext }) {
         <label style={lStyle}>BASE RESUME</label>
         <textarea value={resume} onChange={e => setResume(e.target.value)} rows={10} style={{ ...iStyle, fontFamily: "monospace", fontSize: 12, lineHeight: 1.6, resize: "vertical" }} />
       </div>
-      <Btn onClick={() => onNext({ skills, resume, role, exp, location })} style={{ width: "100%", justifyContent: "center", padding: "12px 24px", fontSize: 14 }}>
+      <Btn onClick={() => {
+        if (user) saveProfile(user.id, { resume, role, location, skills });
+        onNext({ skills, resume, role, exp, location });
+      }} style={{ width: "100%", justifyContent: "center", padding: "12px 24px", fontSize: 14 }}>
         Find Matching Jobs
       </Btn>
     </div>
@@ -511,7 +539,7 @@ export default function App() {
       </div>
       <div style={{ maxWidth: 800, margin: "0 auto", padding: "32px 24px" }}>
         {step === "home" && <HomeScreen onNavigate={setStep} />}
-        {step === "setup" && <SetupStep onNext={(p) => { setProfile(p); setStep("jobs"); }} />}
+        {step === "setup" && <SetupStep onNext={(p) => { setProfile(p); setStep("jobs"); }} user={user} />}
         {step === "jobs" && profile && <JobsStep profile={profile} onBack={() => setStep("home")} user={user} />}
         {step === "scorer" && <ResumeScorer onBack={() => setStep("home")} />}
         {step === "cover" && <CoverLetter onBack={() => setStep("home")} />}
