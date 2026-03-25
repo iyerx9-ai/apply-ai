@@ -130,6 +130,11 @@ function HomeScreen({ onNavigate }) {
           Score My Resume
         </button>
       </div>
+      <div style={{ display: "flex", gap: 16, justifyContent: "center", marginTop: 32, flexWrap: "wrap" }}>
+        {["🔒 Data Encrypted", "🚫 Never Sold", "✅ DPDP Compliant", "🛡️ SOC 2 Infra"].map(b => (
+          <span key={b} style={{ background: "#3fb95015", border: "1px solid #3fb95040", color: "#3fb950", padding: "4px 12px", borderRadius: 20, fontSize: 12, fontWeight: 500 }}>{b}</span>
+        ))}
+      </div>
       <div style={{ display: "flex", gap: 32, justifyContent: "center", marginTop: 64, flexWrap: "wrap" }}>
         {[
           { icon: "🤖", title: "AI Job Matching", desc: "Find jobs matched to your skills" },
