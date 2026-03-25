@@ -326,6 +326,27 @@ function JobsStep({ profile, onBack, user }) {
   const [statusMsg, setStatusMsg] = useState("");
   const [toast, setToast] = useState(null);
   const [showPaywall, setShowPaywall] = useState(false);
+  const [recommendations, setRecommendations] = useState([]);
+
+  // Fetch recommendations after jobs load
+  const fetchRecommendations = async () => {
+    try {
+      const res = await fetch("/api/recommend", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          role: profile.role,
+          skills: profile.skills,
+          location: profile.location,
+          resume: profile.resume?.slice(0, 500),
+        }),
+      });
+      const data = await res.json();
+      if (data.jobs?.length > 0) setRecommendations(data.jobs);
+    } catch (err) {
+      console.log("Recommendations failed:", err);
+    }
+  };
 
   const showToast = (msg, type = "success") => {
     setToast({ msg, type });
@@ -381,7 +402,10 @@ function JobsStep({ profile, onBack, user }) {
     setFetching(false);
   }, [profile]);
 
-  useState(() => { fetchJobs(false); }, []);
+  useState(() => { 
+    fetchJobs(false); 
+    fetchRecommendations();
+  }, []);
 
   const handlePreview = async (job) => {
     setPreviewJob(job);
@@ -518,6 +542,40 @@ Keep it to 3 paragraphs.`,
       </div>
 
       {showPaywall && <Paywall onClose={() => setShowPaywall(false)} reason="searches" user={user} onUpgradeSuccess={() => { setShowPaywall(false); }} />}
+      {recommendations.length > 0 && (
+        <div style={{ marginTop: 32 }}>
+          <h3 style={{ color: COLORS.text, fontSize: 16, fontWeight: 700, marginBottom: 4 }}>
+            💡 You Might Also Like
+          </h3>
+          <p style={{ color: COLORS.textMuted, fontSize: 13, marginBottom: 16 }}>
+            Based on your CV, AI recommends these roles too
+          </p>
+          <div style={{ display: "grid", gap: 12 }}>
+            {recommendations.map((job) => (
+              <div key={job.id} style={{ background: COLORS.surface, border: "1px solid " + COLORS.border, borderRadius: 10, padding: "16px 20px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+                  <div>
+                    <div style={{ color: COLORS.accent, fontSize: 10, fontWeight: 700, marginBottom: 4 }}>
+                      RECOMMENDED: {job.recommendedRole}
+                    </div>
+                    <h4 style={{ color: COLORS.text, margin: 0, fontSize: 14, fontWeight: 700 }}>{job.title}</h4>
+                    <p style={{ color: COLORS.textMuted, margin: "2px 0 0", fontSize: 12 }}>{job.company} · {job.location}</p>
+                  </div>
+                  <div style={{ textAlign: "right" }}>
+                    <div style={{ color: COLORS.blue, fontWeight: 800, fontSize: 16, fontFamily: "monospace" }}>{job.match}%</div>
+                    <div style={{ color: COLORS.textDim, fontSize: 10 }}>MATCH</div>
+                  </div>
+                </div>
+                <p style={{ color: COLORS.textMuted, fontSize: 12, margin: "8px 0", lineHeight: 1.5 }}>{job.desc}</p>
+                <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+                  <Btn onClick={() => handleApply(job)} variant="secondary" style={{ fontSize: 12, padding: "6px 14px" }}>Apply with AI</Btn>
+                  {job.applyLink && <Btn onClick={() => window.open(job.applyLink, "_blank")} variant="ghost" style={{ fontSize: 12, padding: "6px 14px" }}>View Job</Btn>}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
       {appliedIds.length > 0 && (
         <div style={{ marginTop: 20, background: COLORS.greenDim, border: "1px solid " + COLORS.green + "40", borderRadius: 10, padding: "14px 20px" }}>
           <div style={{ color: COLORS.green, fontWeight: 700, fontSize: 14 }}>{appliedIds.length} application{appliedIds.length > 1 ? "s" : ""} submitted</div>
