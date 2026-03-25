@@ -255,11 +255,24 @@ function SetupStep({ onNext }) {
             <input type="file" accept=".pdf,.doc,.docx,.txt" style={{ display: "none" }} onChange={async (e) => {
               const file = e.target.files[0];
               if (!file) return;
-              if (file.type === "text/plain") {
-                const text = await file.text();
-                setResume(text);
-              } else {
-                setResume("Uploaded: " + file.name + "\nPlease paste your CV text below for best AI results.");
+              setResume("⏳ Reading " + file.name + "...");
+              try {
+                if (file.type === "text/plain") {
+                  const text = await file.text();
+                  setResume(text);
+                } else if (file.name.endsWith(".docx") || file.name.endsWith(".doc")) {
+                  const mammoth = await import("mammoth");
+                  const arrayBuffer = await file.arrayBuffer();
+                  const result = await mammoth.extractRawText({ arrayBuffer });
+                  setResume(result.value);
+                } else if (file.type === "application/pdf") {
+                  setResume("PDF detected: " + file.name + "\n\nPDF text extraction coming soon. Please paste your CV text below.");
+                } else {
+                  const text = await file.text();
+                  setResume(text);
+                }
+              } catch (err) {
+                setResume("Could not read file. Please paste your CV text below.");
               }
             }} />
           </label>
