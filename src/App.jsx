@@ -254,6 +254,16 @@ function JobsStep({ profile, onBack, user }) {
       const result = await incrementSearch(user.id);
       if (!result.allowed) { setShowPaywall(true); return; }
     }
+    // Check cache first
+    const cacheKey = `jobs-${profile.role}-${profile.location}`;
+    const cached = sessionStorage.getItem(cacheKey);
+    if (cached) {
+      const { jobs, time } = JSON.parse(cached);
+      if (Date.now() - time < 3600000) { // 1 hour cache
+        setJobs(jobs);
+        return;
+      }
+    }
     setFetching(true);
     setJobs([]);
     try {
@@ -280,6 +290,8 @@ function JobsStep({ profile, onBack, user }) {
         applyLink: j.job_apply_link,
       }));
       setJobs(jobs);
+      // Save to cache
+      sessionStorage.setItem(cacheKey, JSON.stringify({ jobs, time: Date.now() }));
     } catch (err) {
       showToast("Failed to fetch jobs: " + err.message, "error");
     }
