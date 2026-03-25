@@ -394,23 +394,39 @@ function JobsStep({ profile, onBack, user }) {
     setPreviewLoading(false);
   };
 
+  const [aiPackage, setAiPackage] = useState(null);
+
   const handleApply = async (job) => {
     setApplyingId(job.id);
     setStatusMsg("Tailoring resume...");
-    await new Promise(r => setTimeout(r, 900));
-    setStatusMsg("Scanning requirements...");
-    await new Promise(r => setTimeout(r, 700));
-    setStatusMsg("Opening application...");
-    await new Promise(r => setTimeout(r, 500));
-    setAppliedIds(prev => [...prev, job.id]);
-    setApplyingId(null);
-    setStatusMsg("");
-    // Open real job URL
-    if (job.applyLink) {
-      window.open(job.applyLink, "_blank");
-      showToast("Opening " + job.title + " at " + job.company + "!");
-    } else {
-      showToast("Applied to " + job.title + " at " + job.company + "!");
+    try {
+      const tailored = await callClaude(
+        `Tailor this resume for: ${job.title} at ${job.company}.
+Requirements: ${job.requirements?.join(", ")}
+Job Description: ${job.desc}
+
+RESUME:
+${profile.resume}
+
+Return only the tailored resume text, no explanations.`,
+        "You are an expert resume writer."
+      );
+      setStatusMsg("Writing cover letter...");
+      const coverLetter = await callClaude(
+        `Write a professional cover letter for ${job.title} at ${job.company}.
+Job: ${job.desc}
+Resume: ${profile.resume.slice(0, 1000)}
+Keep it to 3 paragraphs.`,
+        "You are an expert cover letter writer."
+      );
+      setApplyingId(null);
+      setStatusMsg("");
+      setAppliedIds(prev => [...prev, job.id]);
+      setAiPackage({ job, resume: tailored, coverLetter });
+    } catch(err) {
+      setApplyingId(null);
+      setStatusMsg("");
+      showToast("Failed: " + err.message, "error");
     }
   };
 
@@ -503,6 +519,27 @@ function JobsStep({ profile, onBack, user }) {
         </div>
       )}
 
+      {aiPackage && (
+        <div onClick={() => setAiPackage(null)} style={{ position: "fixed", inset: 0, background: "#000000cc", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: "#161b22", border: "1px solid #21262d", borderRadius: 12, width: "100%", maxWidth: 720, maxHeight: "90vh", display: "flex", flexDirection: "column" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "18px 24px", borderBottom: "1px solid #21262d" }}>
+              <span style={{ fontWeight: 700, fontSize: 16, color: "#e6edf3" }}>✅ AI Package Ready — {aiPackage.job.title} at {aiPackage.job.company}</span>
+              <button onClick={() => setAiPackage(null)} style={{ background: "none", border: "none", color: "#7d8590", cursor: "pointer", fontSize: 20 }}>×</button>
+            </div>
+            <div style={{ overflowY: "auto", padding: 24, flex: 1 }}>
+              <h4 style={{ color: "#7d8590", fontSize: 11, letterSpacing: "0.08em", marginBottom: 8 }}>AI-TAILORED RESUME</h4>
+              <pre style={{ background: "#111318", border: "1px solid #21262d", borderRadius: 8, padding: 16, fontSize: 12, lineHeight: 1.7, color: "#e6edf3", whiteSpace: "pre-wrap", wordBreak: "break-word", margin: "0 0 20px", fontFamily: "monospace" }}>{aiPackage.resume}</pre>
+              <h4 style={{ color: "#7d8590", fontSize: 11, letterSpacing: "0.08em", marginBottom: 8 }}>AI-GENERATED COVER LETTER</h4>
+              <pre style={{ background: "#111318", border: "1px solid #21262d", borderRadius: 8, padding: 16, fontSize: 12, lineHeight: 1.7, color: "#e6edf3", whiteSpace: "pre-wrap", wordBreak: "break-word", margin: "0 0 20px", fontFamily: "monospace" }}>{aiPackage.coverLetter}</pre>
+              <div style={{ display: "flex", gap: 10 }}>
+                <button onClick={() => { navigator.clipboard.writeText(aiPackage.resume + "\n\n---COVER LETTER---\n\n" + aiPackage.coverLetter); showToast("Copied to clipboard!"); }} style={{ padding: "10px 20px", background: "#f0b429", color: "#0a0b0d", border: "none", borderRadius: 7, fontWeight: 700, cursor: "pointer" }}>Copy All</button>
+                {aiPackage.job.applyLink && <button onClick={() => { window.open(aiPackage.job.applyLink, "_blank"); setAiPackage(null); }} style={{ padding: "10px 20px", background: "#3fb950", color: "#0a0b0d", border: "none", borderRadius: 7, fontWeight: 700, cursor: "pointer" }}>Open Job Application →</button>}
+                <button onClick={() => setAiPackage(null)} style={{ padding: "10px 20px", background: "transparent", color: "#7d8590", border: "1px solid #21262d", borderRadius: 7, cursor: "pointer" }}>Close</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       <Modal open={!!previewJob} onClose={() => setPreviewJob(null)} title={previewJob ? "Preview - " + previewJob.title + " at " + previewJob.company : ""}>
         {previewJob && (
           <div>
