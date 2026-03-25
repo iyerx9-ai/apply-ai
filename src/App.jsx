@@ -264,7 +264,28 @@ function SetupStep({ onNext }) {
                   const mammoth = await import("mammoth");
                   const arrayBuffer = await file.arrayBuffer();
                   const result = await mammoth.extractRawText({ arrayBuffer });
-                  setResume(result.value);
+                  const extractedText = result.value;
+                  setResume(extractedText);
+                  // Auto extract role and skills from CV using AI
+                  setRole("Analyzing CV...");
+                  try {
+                    const { callClaude: cc } = await import("./api.js");
+                    const analysis = await cc(
+                      `Analyze this CV and extract in JSON only, no markdown:
+{"role":"most recent job title","skills":["skill1","skill2","skill3","skill4","skill5"],"exp":"Entry-level|Mid-level|Senior|Lead / Manager"}
+
+CV:
+${extractedText.slice(0, 2000)}`,
+                      "Return only raw JSON. No markdown. No extra text."
+                    );
+                    const clean = analysis.replace(/\`\`\`json|\`\`\`/g, "").trim();
+                    const parsed = JSON.parse(clean);
+                    if (parsed.role) setRole(parsed.role);
+                    if (parsed.skills) setSkills(parsed.skills);
+                    if (parsed.exp) setExp(parsed.exp);
+                  } catch(e) {
+                    console.log("Auto-extract failed", e);
+                  }
                 } else if (file.type === "application/pdf") {
                   setResume("PDF detected: " + file.name + "\n\nPDF text extraction coming soon. Please paste your CV text below.");
                 } else {
