@@ -301,8 +301,7 @@ ${extractedText.slice(0, 2000)}`,
         <textarea value={resume} onChange={e => setResume(e.target.value)} rows={10} style={{ ...iStyle, fontFamily: "monospace", fontSize: 12, lineHeight: 1.6, resize: "vertical" }} placeholder="Paste your CV here or upload above..." />
       </div>
       <Btn onClick={() => {
-        if (user) saveProfile(user.id, { resume, role, location, skills });
-        onNext({ skills, resume, role, exp, location });
+  onNext({ skills, resume, role, exp, location });
       }} style={{ width: "100%", justifyContent: "center", padding: "12px 24px", fontSize: 14 }}>
         Find Matching Jobs
       </Btn>
