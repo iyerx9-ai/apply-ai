@@ -664,7 +664,7 @@ export default function App() {
   const [user, setUser] = useState(null);
   const [step, setStep] = useState("home");
   const [profile, setProfile] = useState(null);
-  if (!user) return <Auth onLogin={setUser} />;
+  if (!user) return <><Auth onLogin={setUser} /><EmailCapture user={null} /></>;
 
   return (
     <div style={{ minHeight: "100vh", background: COLORS.bg, fontFamily: "'DM Sans', 'Segoe UI', sans-serif", color: COLORS.text }}>
