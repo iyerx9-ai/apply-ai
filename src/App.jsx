@@ -7,7 +7,7 @@ import EmailCapture from "./EmailCapture";
 import { TermsPage, RefundPage, ContactPage, AboutPage, PrivacyPage } from "./Legal";
 import Auth from "./Auth";
 import { supabase } from "./supabase";
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import ResumeScorer from "./ResumeScorer";
 import Paywall from "./Paywall";
 import { incrementSearch, incrementApplication } from "./usageLimits";
@@ -664,6 +664,22 @@ Keep it to 3 paragraphs.`,
 // Footer added below
 export default function App() {
   const [user, setUser] = useState(null);
+
+  // Handle OAuth callback + session persistence
+  useEffect(() => {
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) setUser(session.user);
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) setUser(session.user);
+      else setUser(null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
   const navigate = useNavigate();
   const location = useLocation();
   const step = location.pathname.replace("/", "") || "home";
