@@ -1,5 +1,6 @@
 import { callClaude } from "./api.js";
 import CoverLetter from "./CoverLetter";
+import Pricing from "./Pricing";
 import CookieBanner from "./CookieBanner";
 import EmailCapture from "./EmailCapture";
 import { TermsPage, RefundPage, ContactPage, AboutPage, PrivacyPage } from "./Legal";
@@ -697,13 +698,14 @@ export default function App() {
         {step === "cover" && <CoverLetter onBack={() => setStep("home")} />}
         {step === "terms" && <TermsPage />}
         {step === "about" && <AboutPage />}
+        {step === "pricing" && <Pricing onBack={() => setStep("home")} onUpgrade={() => setStep("home")} />}
         {step === "privacy" && <PrivacyPage />}
         {step === "refund" && <RefundPage />}
         {step === "contact" && <ContactPage />}
       </div>
       <div style={{ borderTop: "1px solid #21262d", marginTop: 40, padding: "20px 24px", textAlign: "center" }}>
         <div style={{ display: "flex", gap: 24, justifyContent: "center", flexWrap: "wrap" }}>
-          {[["About", "about"], ["Privacy", "privacy"], ["Terms", "terms"], ["Refund Policy", "refund"], ["Contact", "contact"]].map(([label, s]) => (
+          {[["About", "about"], ["Pricing", "pricing"], ["Privacy", "privacy"], ["Terms", "terms"], ["Refund Policy", "refund"], ["Contact", "contact"]].map(([label, s]) => (
             <span key={s} onClick={() => setStep(s)} style={{ color: "#7d8590", fontSize: 12, cursor: "pointer" }}>{label}</span>
           ))}
         </div>
