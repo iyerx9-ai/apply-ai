@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 const COLORS = {
   bg: "#0a0b0d", card: "#161b22", border: "#21262d",
   accent: "#f0b429", green: "#3fb950", text: "#e6edf3", textMuted: "#7d8590",
@@ -9,9 +11,15 @@ export default function Paywall({ onClose, reason = "searches", user, onUpgradeS
     if (onUpgradeSuccess) onUpgradeSuccess();
   };
 
+  const [showUPI, setShowUPI] = useState(false);
+
   const handleUPI = () => {
-    window.open("upi://pay?pa=9985847014@jupiteraxis&pn=ApplyAI&am=499&cu=INR&tn=ApplyAI+Pro+Plan", "_blank");
-    if (onUpgradeSuccess) onUpgradeSuccess();
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    if (isMobile) {
+      window.open("upi://pay?pa=9985847014@jupiteraxis&pn=ApplyAI&am=499&cu=INR&tn=ApplyAI+Pro+Plan", "_blank");
+    } else {
+      setShowUPI(true);
+    }
   };
 
   const handlePaddle = () => {
@@ -57,6 +65,28 @@ export default function Paywall({ onClose, reason = "searches", user, onUpgradeS
         }}>
           Pay with UPI — ₹499
         </button>
+        {showUPI && (
+          <div style={{ background: "#fff", borderRadius: 12, padding: 20, marginBottom: 10, textAlign: "center" }}>
+            <p style={{ color: "#333", fontSize: 13, margin: "0 0 12px", fontWeight: 600 }}>
+              Scan QR code with any UPI app
+            </p>
+            <img
+              src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent("upi://pay?pa=9985847014@jupiteraxis&pn=ApplyAI&am=499&cu=INR&tn=ApplyAI+Pro+Plan")}`}
+              alt="UPI QR Code"
+              style={{ width: 180, height: 180, borderRadius: 8 }}
+            />
+            <p style={{ color: "#666", fontSize: 12, margin: "12px 0 4px" }}>UPI ID: 9985847014@jupiteraxis</p>
+            <p style={{ color: "#666", fontSize: 12, margin: 0 }}>Amount: ₹499</p>
+            <p style={{ color: "#999", fontSize: 11, margin: "8px 0 0" }}>
+              After payment, email iyerx9@gmail.com with screenshot
+            </p>
+            <button onClick={() => setShowUPI(false)} style={{
+              marginTop: 12, padding: "6px 16px", background: "transparent",
+              color: "#999", border: "1px solid #ddd", borderRadius: 6,
+              fontSize: 12, cursor: "pointer"
+            }}>Close</button>
+          </div>
+        )}
         <button onClick={handlePaddle} style={{
           width: "100%", padding: "14px", background: "#0066FF", color: "#fff",
           border: "none", borderRadius: 8, fontSize: 15, fontWeight: 800, cursor: "pointer", marginBottom: 12,
