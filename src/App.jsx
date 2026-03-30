@@ -673,9 +673,31 @@ export default function App() {
     });
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) setUser(session.user);
-      else setUser(null);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (session?.user) {
+        setUser(session.user);
+        // Send welcome email for new users
+        if (_event === "SIGNED_IN") {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("id")
+            .eq("id", session.user.id)
+            .single();
+          if (!profile) {
+            // New user - send welcome email
+            fetch("/api/subscribe", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                email: session.user.email,
+                name: session.user.user_metadata?.full_name || "",
+              }),
+            });
+          }
+        }
+      } else {
+        setUser(null);
+      }
     });
 
     return () => subscription.unsubscribe();
