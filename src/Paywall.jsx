@@ -17,7 +17,7 @@ export default function Paywall({ onClose, reason = "searches", user, onUpgradeS
   const handlePaddle = () => {
     if (window.Paddle) {
       window.Paddle.Environment.set("production");
-      window.Paddle.Initialize({ token: "pdl_live_308670" });
+      window.Paddle.Initialize({ token: "live_040d02e495a75071975e3dee5d3" });
       window.Paddle.Checkout.open({
         items: [{ priceId: "pri_01kmzkr4pr65s00cqfwc83n3ch", quantity: 1 }],
         customer: { email: user?.email || "" },
