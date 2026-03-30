@@ -14,6 +14,18 @@ export default function Paywall({ onClose, reason = "searches", user, onUpgradeS
     if (onUpgradeSuccess) onUpgradeSuccess();
   };
 
+  const handlePaddle = () => {
+    if (window.Paddle) {
+      window.Paddle.Environment.set("production");
+      window.Paddle.Initialize({ token: "pdl_live_308670" });
+      window.Paddle.Checkout.open({
+        items: [{ priceId: "pri_01kmzkr4pr65s00cqfwc83n3ch", quantity: 1 }],
+        customer: { email: user?.email || "" },
+        successUrl: "https://apply-ai-alpha.vercel.app",
+      });
+    }
+  };
+
   return (
     <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "#000000cc", zIndex: 2000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
       <div onClick={e => e.stopPropagation()} style={{ background: COLORS.card, border: "1px solid " + COLORS.border, borderRadius: 16, width: "100%", maxWidth: 440, padding: 36, textAlign: "center" }}>
@@ -41,9 +53,15 @@ export default function Paywall({ onClose, reason = "searches", user, onUpgradeS
         </button>
         <button onClick={handleUPI} style={{
           width: "100%", padding: "14px", background: "#4CAF50", color: "#fff",
-          border: "none", borderRadius: 8, fontSize: 15, fontWeight: 800, cursor: "pointer", marginBottom: 12,
+          border: "none", borderRadius: 8, fontSize: 15, fontWeight: 800, cursor: "pointer", marginBottom: 10,
         }}>
           Pay with UPI — ₹499
+        </button>
+        <button onClick={handlePaddle} style={{
+          width: "100%", padding: "14px", background: "#0066FF", color: "#fff",
+          border: "none", borderRadius: 8, fontSize: 15, fontWeight: 800, cursor: "pointer", marginBottom: 12,
+        }}>
+          Pay with Card — $6.99/month 🌍
         </button>
         <div onClick={onClose} style={{ color: COLORS.textMuted, fontSize: 13, cursor: "pointer" }}>
           Maybe later
