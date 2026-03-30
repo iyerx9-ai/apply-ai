@@ -1,4 +1,5 @@
 import { callClaude } from "./api.js";
+import { Routes, Route, useNavigate, useLocation } from "react-router-dom";
 import CoverLetter from "./CoverLetter";
 import Pricing from "./Pricing";
 import CookieBanner from "./CookieBanner";
@@ -663,7 +664,10 @@ Keep it to 3 paragraphs.`,
 // Footer added below
 export default function App() {
   const [user, setUser] = useState(null);
-  const [step, setStep] = useState("home");
+  const navigate = useNavigate();
+  const location = useLocation();
+  const step = location.pathname.replace("/", "") || "home";
+  const setStep = (s) => navigate(s === "home" ? "/" : "/" + s);
   const [profile, setProfile] = useState(null);
   if (!user) return <><Auth onLogin={setUser} /><EmailCapture user={null} /></>;
 
