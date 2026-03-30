@@ -21,6 +21,16 @@ export default function Auth({ onLogin }) {
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
 
+  const handleGoogle = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: 'https://apply-ai-alpha.vercel.app'
+      }
+    });
+    if (error) setError(error.message);
+  };
+
   const handle = async () => {
     setLoading(true);
     setError("");
@@ -61,6 +71,19 @@ export default function Auth({ onLogin }) {
             cursor: loading ? "not-allowed" : "pointer", opacity: loading ? 0.7 : 1,
           }}>
             {loading ? "Please wait..." : mode === "login" ? "Sign In" : "Create Account"}
+          </button>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "16px 0" }}>
+            <div style={{ flex: 1, height: 1, background: COLORS.border }} />
+            <span style={{ color: COLORS.textMuted, fontSize: 12 }}>OR</span>
+            <div style={{ flex: 1, height: 1, background: COLORS.border }} />
+          </div>
+          <button onClick={handleGoogle} style={{
+            width: "100%", padding: "11px", background: "#fff", color: "#333",
+            border: "1px solid #ddd", borderRadius: 7, fontSize: 14, fontWeight: 600,
+            cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
+          }}>
+            <img src="https://www.google.com/favicon.ico" width="18" height="18" alt="Google" />
+            Continue with Google
           </button>
           <div style={{ textAlign: "center", marginTop: 16 }}>
             <span style={{ color: COLORS.textMuted, fontSize: 13 }}>
