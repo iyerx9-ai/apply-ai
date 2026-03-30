@@ -25,7 +25,7 @@ export default function Auth({ onLogin }) {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: 'https://apply-ai-alpha.vercel.app'
+        redirectTo: window.location.origin
       }
     });
     if (error) setError(error.message);
