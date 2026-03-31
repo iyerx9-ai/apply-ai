@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { callClaude } from "./api.js";
-import { supabase } from "./supabase.js";
+import { createClient } from "@supabase/supabase-js";
+const supabase = createClient(import.meta.env.VITE_SUPABASE_URL, import.meta.env.VITE_SUPABASE_ANON_KEY);
 
 const COLORS = {
   bg: "#0a0b0d", surface: "#111318", card: "#161b22", border: "#21262d",
