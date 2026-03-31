@@ -3,6 +3,7 @@ import { Routes, Route, useNavigate, useLocation } from "react-router-dom";
 import CoverLetter from "./CoverLetter";
 import Pricing from "./Pricing";
 import Referral from "./Referral";
+import Referral from "./Referral";
 import CookieBanner from "./CookieBanner";
 import EmailCapture from "./EmailCapture";
 import { TermsPage, RefundPage, ContactPage, AboutPage, PrivacyPage } from "./Legal";
