@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://hirex.world/sitemap.xml
