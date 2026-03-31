@@ -2,6 +2,7 @@ import { callClaude } from "./api.js";
 import { Routes, Route, useNavigate, useLocation } from "react-router-dom";
 import CoverLetter from "./CoverLetter";
 import Pricing from "./Pricing";
+import Referral from "./Referral";
 import CookieBanner from "./CookieBanner";
 import EmailCapture from "./EmailCapture";
 import { TermsPage, RefundPage, ContactPage, AboutPage, PrivacyPage } from "./Legal";
@@ -693,6 +694,28 @@ export default function App() {
                 name: session.user.user_metadata?.full_name || "",
               }),
             });
+            // Track referral
+            const urlParams = new URLSearchParams(window.location.search);
+            const ref = urlParams.get("ref");
+            if (ref) {
+              // Save referred_by
+              await supabase.from("profiles").upsert({
+                id: session.user.id,
+                email: session.user.email,
+                referred_by: ref,
+              });
+              // Increment referrer count
+              const { data: referrer } = await supabase
+                .from("profiles")
+                .select("id, referral_count")
+                .eq("referral_code", ref)
+                .single();
+              if (referrer) {
+                await supabase.from("profiles").update({
+                  referral_count: (referrer.referral_count || 0) + 1
+                }).eq("id", referrer.id);
+              }
+            }
           }
         }
       } else {
@@ -729,6 +752,7 @@ export default function App() {
             <Btn onClick={() => setStep("setup")} variant="ghost" style={{ fontSize: 12, padding: "6px 12px" }}>Find Jobs</Btn>
             <Btn onClick={() => setStep("scorer")} variant="secondary" style={{ fontSize: 12, padding: "6px 12px" }}>Score Resume</Btn>
             <Btn onClick={() => setStep("cover")} variant="ghost" style={{ fontSize: 12, padding: "6px 12px" }}>Cover Letter</Btn>
+            <Btn onClick={() => setStep("referral")} variant="ghost" style={{ fontSize: 12, padding: "6px 12px" }}>Refer &amp; Earn</Btn>
           </div>
         </div>
       </div>
@@ -737,6 +761,7 @@ export default function App() {
         {step === "setup" && <SetupStep onNext={(p) => { setProfile(p); setStep("jobs"); }} user={user} />}
         {step === "jobs" && profile && <JobsStep profile={profile} onBack={() => setStep("home")} user={user} />}
         {step === "scorer" && <ResumeScorer onBack={() => setStep("home")} />}
+        {step === "referral" && <Referral user={user} />}
         {step === "cover" && <CoverLetter onBack={() => setStep("home")} />}
         {step === "terms" && <TermsPage />}
         {step === "about" && <AboutPage />}
@@ -747,7 +772,7 @@ export default function App() {
       </div>
       <div style={{ borderTop: "1px solid #21262d", marginTop: 40, padding: "20px 24px", textAlign: "center" }}>
         <div style={{ display: "flex", gap: 24, justifyContent: "center", flexWrap: "wrap" }}>
-          {[["About", "about"], ["Pricing", "pricing"], ["Privacy", "privacy"], ["Terms", "terms"], ["Refund Policy", "refund"], ["Contact", "contact"]].map(([label, s]) => (
+          {[["About", "about"], ["Pricing", "pricing"], ["Refer & Earn", "referral"], ["Privacy", "privacy"], ["Terms", "terms"], ["Refund Policy", "refund"], ["Contact", "contact"]].map(([label, s]) => (
             <span key={s} onClick={() => setStep(s)} style={{ color: "#7d8590", fontSize: 12, cursor: "pointer" }}>{label}</span>
           ))}
         </div>
