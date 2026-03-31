@@ -29,7 +29,7 @@ export default function Paywall({ onClose, reason = "searches", user, onUpgradeS
       window.Paddle.Checkout.open({
         items: [{ priceId: "pri_01kmzkr4pr65s00cqfwc83n3ch", quantity: 1 }],
         customer: { email: user?.email || "" },
-        successUrl: "https://apply-ai-alpha.vercel.app",
+        successUrl: "https://hirex.world",
       });
     }
   };

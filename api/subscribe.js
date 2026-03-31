@@ -41,7 +41,7 @@ export default async function handler(req, res) {
             </div>
 
             <div style="text-align: center; margin: 32px 0;">
-              <a href="https://apply-ai-alpha.vercel.app" style="background: #f0b429; color: #0a0b0d; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 16px;">
+              <a href="https://hirex.world" style="background: #f0b429; color: #0a0b0d; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 16px;">
                 Start Finding Jobs →
               </a>
             </div>
@@ -54,7 +54,7 @@ export default async function handler(req, res) {
             <hr style="border: none; border-top: 1px solid #eee; margin: 32px 0;" />
             <p style="color: #aaa; font-size: 12px; text-align: center;">
               ApplyAI · Bengaluru, India · 
-              <a href="https://apply-ai-alpha.vercel.app" style="color: #aaa;">apply-ai-alpha.vercel.app</a>
+              <a href="https://hirex.world" style="color: #aaa;">hirex.world</a>
             </p>
           </div>
         `,
