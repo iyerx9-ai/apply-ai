@@ -3,6 +3,7 @@ import { Routes, Route, useNavigate, useLocation } from "react-router-dom";
 import CoverLetter from "./CoverLetter";
 import Pricing from "./Pricing";
 import Referral from "./Referral";
+import Employer from "./Employer";
 import CookieBanner from "./CookieBanner";
 import EmailCapture from "./EmailCapture";
 import { TermsPage, RefundPage, ContactPage, AboutPage, PrivacyPage } from "./Legal";
@@ -753,6 +754,7 @@ export default function App() {
             <Btn onClick={() => setStep("scorer")} variant="secondary" style={{ fontSize: 12, padding: "6px 12px" }}>Score Resume</Btn>
             <Btn onClick={() => setStep("cover")} variant="ghost" style={{ fontSize: 12, padding: "6px 12px" }}>Cover Letter</Btn>
             <Btn onClick={() => setStep("referral")} variant="ghost" style={{ fontSize: 12, padding: "6px 12px" }}>Refer &amp; Earn</Btn>
+            <Btn onClick={() => setStep("employer")} variant="ghost" style={{ fontSize: 12, padding: "6px 12px" }}>For Employers</Btn>
           </div>
         </div>
       </div>
