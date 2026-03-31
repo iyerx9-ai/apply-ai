@@ -57,20 +57,7 @@ export default function Employer({ onBack, user }) {
   };
 
   const handleEmployerUpgrade = () => {
-    if (window.Paddle) {
-      try {
-        window.Paddle.Initialize({ token: "live_040d02e495a75071975e3dee5d3" });
-        window.Paddle.Checkout.open({
-          items: [{ priceId: "pri_01kn25pt4rtaetbdw3ysqdde6g", quantity: 1 }],
-          customer: { email: user?.email || "" },
-          successUrl: "https://hirex.world/employer",
-        });
-      } catch(e) {
-        window.open("https://buy.paddle.com/product/pri_01kn25pt4rtaetbdw3ysqdde6g", "_blank");
-      }
-    } else {
-      window.open("https://buy.paddle.com/product/pri_01kn25pt4rtaetbdw3ysqdde6g", "_blank");
-    }
+    window.open("https://buy.paddle.com/product/pri_01kn25pt4rtaetbdw3ysqdde6g", "_blank");
   };
 
   const loadJobs = async () => {
