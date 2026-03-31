@@ -679,44 +679,35 @@ export default function App() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (session?.user) {
         setUser(session.user);
-        // Send welcome email for new users
-        if (_event === "SIGNED_IN") {
-          const { data: profile } = await supabase
-            .from("profiles")
-            .select("id")
-            .eq("id", session.user.id)
-            .single();
-          if (!profile) {
-            // New user - send welcome email
-            fetch("/api/subscribe", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                email: session.user.email,
-                name: session.user.user_metadata?.full_name || "",
-              }),
+        // Only send welcome email on first signup (not every login)
+        if (_event === "SIGNED_UP") {
+          // New user - send welcome email once
+          fetch("/api/subscribe", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              email: session.user.email,
+              name: session.user.user_metadata?.full_name || "",
+            }),
+          });
+          // Track referral
+          const urlParams = new URLSearchParams(window.location.search);
+          const ref = urlParams.get("ref");
+          if (ref) {
+            await supabase.from("profiles").upsert({
+              id: session.user.id,
+              email: session.user.email,
+              referred_by: ref,
             });
-            // Track referral
-            const urlParams = new URLSearchParams(window.location.search);
-            const ref = urlParams.get("ref");
-            if (ref) {
-              // Save referred_by
-              await supabase.from("profiles").upsert({
-                id: session.user.id,
-                email: session.user.email,
-                referred_by: ref,
-              });
-              // Increment referrer count
-              const { data: referrer } = await supabase
-                .from("profiles")
-                .select("id, referral_count")
-                .eq("referral_code", ref)
-                .single();
-              if (referrer) {
-                await supabase.from("profiles").update({
-                  referral_count: (referrer.referral_count || 0) + 1
-                }).eq("id", referrer.id);
-              }
+            const { data: referrer } = await supabase
+              .from("profiles")
+              .select("id, referral_count")
+              .eq("referral_code", ref)
+              .single();
+            if (referrer) {
+              await supabase.from("profiles").update({
+                referral_count: (referrer.referral_count || 0) + 1
+              }).eq("id", referrer.id);
             }
           }
         }
