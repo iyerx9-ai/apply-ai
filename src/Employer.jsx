@@ -57,7 +57,7 @@ export default function Employer({ onBack, user }) {
   };
 
   const handleEmployerUpgrade = () => {
-    window.open("https://buy.paddle.com/product/pri_01kn25pt4rtaetbdw3ysqdde6g", "_blank");
+    window.location.href = "https://buy.paddle.com/product/pri_01kn25pt4rtaetbdw3ysqdde6g";
   };
 
   const loadJobs = async () => {
