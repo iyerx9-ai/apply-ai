@@ -4,6 +4,7 @@ import CoverLetter from "./CoverLetter";
 import Pricing from "./Pricing";
 import Referral from "./Referral";
 import Employer from "./Employer";
+import Jobs from "./Jobs";
 import CookieBanner from "./CookieBanner";
 import EmailCapture from "./EmailCapture";
 import { TermsPage, RefundPage, ContactPage, AboutPage, PrivacyPage } from "./Legal";
@@ -772,10 +773,11 @@ export default function App() {
         {step === "refund" && <RefundPage />}
         {step === "contact" && <ContactPage />}
         {step === "employer" && <Employer onBack={() => setStep("home")} user={user} />}
+        {step === "jobs-board" && <Jobs user={user} onBack={() => setStep("home")} />}
       </div>
       <div style={{ borderTop: "1px solid #21262d", marginTop: 40, padding: "20px 24px", textAlign: "center" }}>
         <div style={{ display: "flex", gap: 24, justifyContent: "center", flexWrap: "wrap" }}>
-          {[["About", "about"], ["Pricing", "pricing"], ["Refer & Earn", "referral"], ["Privacy", "privacy"], ["Terms", "terms"], ["Refund Policy", "refund"], ["Contact", "contact"]].map(([label, s]) => (
+          {[["About", "about"], ["Pricing", "pricing"], ["Refer & Earn", "referral"], ["Jobs Board", "jobs-board"], ["Privacy", "privacy"], ["Terms", "terms"], ["Refund Policy", "refund"], ["Contact", "contact"]].map(([label, s]) => (
             <span key={s} onClick={() => setStep(s)} style={{ color: "#7d8590", fontSize: 12, cursor: "pointer" }}>{label}</span>
           ))}
         </div>
