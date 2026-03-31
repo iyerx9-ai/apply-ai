@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { callClaude } from "./api.js";
 import { createClient } from "@supabase/supabase-js";
+
 const supabase = createClient(import.meta.env.VITE_SUPABASE_URL, import.meta.env.VITE_SUPABASE_ANON_KEY);
 
 const COLORS = {
@@ -37,12 +38,35 @@ export default function Employer({ onBack, user }) {
   const [selectedJob, setSelectedJob] = useState(null);
   const [posting, setPosting] = useState(false);
   const [posted, setPosted] = useState(false);
+  const [employerPlan, setEmployerPlan] = useState("free");
 
   useEffect(() => {
     if (user) {
       loadJobs();
+      checkEmployerPlan();
     }
   }, [user]);
+
+  const checkEmployerPlan = async () => {
+    const { data } = await supabase
+      .from("profiles")
+      .select("plan")
+      .eq("id", user.id)
+      .single();
+    if (data?.plan === "employer") setEmployerPlan("pro");
+  };
+
+  const handleEmployerUpgrade = () => {
+    if (window.Paddle) {
+      window.Paddle.Environment.set("production");
+      window.Paddle.Initialize({ token: "live_040d02e495a75071975e3dee5d3" });
+      window.Paddle.Checkout.open({
+        items: [{ priceId: "pri_01kn25pt4rtaetbdw3ysqdde6g", quantity: 1 }],
+        customer: { email: user?.email || "" },
+        successUrl: "https://hirex.world/employer",
+      });
+    }
+  };
 
   const loadJobs = async () => {
     const { data } = await supabase
@@ -65,7 +89,7 @@ export default function Employer({ onBack, user }) {
   const postJob = async () => {
     if (!jobTitle || !jobDesc) return;
     setPosting(true);
-    const { data, error } = await supabase.from("jobs").insert({
+    const { data } = await supabase.from("jobs").insert({
       employer_id: user.id,
       title: jobTitle,
       description: jobDesc,
@@ -87,7 +111,6 @@ export default function Employer({ onBack, user }) {
     if (!selectedJob) return;
     setScreening(true);
     setResults([]);
-    await loadApplications(selectedJob.id);
     const { data: apps } = await supabase
       .from("applications")
       .select("*")
@@ -99,7 +122,7 @@ export default function Employer({ onBack, user }) {
     }
 
     try {
-      const cvList = apps.map((a, i) => 
+      const cvList = apps.map((a, i) =>
         `Candidate ${i+1} - ${a.applicant_name}:\n${a.cv_text?.slice(0, 500)}`
       ).join("\n\n");
 
@@ -121,7 +144,6 @@ Return ONLY JSON array:
       const end = clean.lastIndexOf("]") + 1;
       const scored = JSON.parse(clean.slice(start, end));
 
-      // Update scores in database
       for (const s of scored) {
         const app = apps.find(a => a.applicant_name === s.name);
         if (app) {
@@ -148,6 +170,8 @@ Return ONLY JSON array:
 
   const scoreColor = (s) => s >= 80 ? COLORS.green : s >= 60 ? COLORS.accent : COLORS.red;
 
+  const visibleResults = employerPlan === "pro" ? results : results.slice(0, 3);
+
   return (
     <div style={{ maxWidth: 900, margin: "0 auto" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
@@ -159,6 +183,18 @@ Return ONLY JSON array:
           Back
         </button>
       </div>
+
+      {employerPlan === "free" && (
+        <div style={{ background: COLORS.accent + "15", border: "1px solid " + COLORS.accent + "40", borderRadius: 10, padding: 16, marginBottom: 20, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
+          <div>
+            <div style={{ color: COLORS.accent, fontWeight: 700, fontSize: 14, marginBottom: 4 }}>Free Plan — Limited Access</div>
+            <div style={{ color: COLORS.textMuted, fontSize: 13 }}>Post 1 job, see top 3 candidates only. Start 7-day free trial for unlimited access!</div>
+          </div>
+          <button onClick={handleEmployerUpgrade} style={{ padding: "10px 20px", background: COLORS.accent, color: "#0a0b0d", border: "none", borderRadius: 7, fontSize: 13, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" }}>
+            Start 7-Day Free Trial
+          </button>
+        </div>
+      )}
 
       <div style={{ display: "flex", gap: 8, marginBottom: 24 }}>
         {[["post", "Post a Job"], ["screen", "Screen CVs"], ["candidates", "Candidates"]].map(([id, label]) => (
@@ -228,7 +264,7 @@ Return ONLY JSON array:
           }}>
             {posting ? <><Spinner size={16} color="#0a0b0d" /> Posting...</> : "Post Job"}
           </button>
-          {posted && <p style={{ color: COLORS.green, fontSize: 13, marginTop: 10, textAlign: "center" }}>✅ Job posted! Candidates can now apply.</p>}
+          {posted && <p style={{ color: COLORS.green, fontSize: 13, marginTop: 10, textAlign: "center" }}>✅ Job posted! Candidates can now apply at hirex.world</p>}
         </div>
       )}
 
@@ -260,18 +296,18 @@ Return ONLY JSON array:
                 </div>
               </div>
 
-              {applications.length === 0 && !screening && (
+              {applications.length === 0 && results.length === 0 && !screening && (
                 <div style={{ background: COLORS.card, border: "1px solid " + COLORS.border, borderRadius: 12, padding: 40, textAlign: "center" }}>
                   <div style={{ fontSize: 48, marginBottom: 16 }}>📭</div>
                   <p style={{ color: COLORS.textMuted, fontSize: 14 }}>No applications yet.</p>
                   <p style={{ color: COLORS.textMuted, fontSize: 13 }}>Share your job link to start receiving applications!</p>
                   <div style={{ background: COLORS.surface, border: "1px solid " + COLORS.border, borderRadius: 7, padding: "10px 14px", marginTop: 16, fontFamily: "monospace", fontSize: 13, color: COLORS.textMuted }}>
-                    hirex.world/jobs/{selectedJob.id}
+                    hirex.world → Jobs Board
                   </div>
                 </div>
               )}
 
-              {results.length > 0 && results.sort((a, b) => b.score - a.score).map((r, i) => (
+              {visibleResults.sort((a, b) => b.score - a.score).map((r, i) => (
                 <div key={i} style={{ background: COLORS.card, border: "1px solid " + COLORS.border, borderRadius: 10, padding: 20, marginBottom: 12 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
                     <div>
@@ -308,6 +344,21 @@ Return ONLY JSON array:
                   </div>
                 </div>
               ))}
+
+              {results.length > 3 && employerPlan === "free" && (
+                <div style={{ background: COLORS.card, border: "1px solid " + COLORS.border, borderRadius: 12, padding: 32, textAlign: "center", marginTop: 12 }}>
+                  <div style={{ fontSize: 32, marginBottom: 12 }}>🔒</div>
+                  <h3 style={{ color: COLORS.text, margin: "0 0 8px", fontSize: 16, fontWeight: 700 }}>
+                    {results.length - 3} more candidates hidden
+                  </h3>
+                  <p style={{ color: COLORS.textMuted, fontSize: 13, margin: "0 0 16px" }}>
+                    Upgrade to see all ranked candidates with AI insights.
+                  </p>
+                  <button onClick={handleEmployerUpgrade} style={{ padding: "12px 28px", background: COLORS.accent, color: "#0a0b0d", border: "none", borderRadius: 7, fontSize: 14, fontWeight: 700, cursor: "pointer" }}>
+                    Start 7-Day Free Trial — then $35.99/month
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>
