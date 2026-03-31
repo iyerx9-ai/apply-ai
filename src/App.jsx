@@ -771,7 +771,7 @@ export default function App() {
         {step === "privacy" && <PrivacyPage />}
         {step === "refund" && <RefundPage />}
         {step === "contact" && <ContactPage />}
-        {step === "employer" && <Employer onBack={() => setStep("home")} />}
+        {step === "employer" && <Employer onBack={() => setStep("home")} user={user} />}
       </div>
       <div style={{ borderTop: "1px solid #21262d", marginTop: 40, padding: "20px 24px", textAlign: "center" }}>
         <div style={{ display: "flex", gap: 24, justifyContent: "center", flexWrap: "wrap" }}>

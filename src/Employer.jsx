@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { callClaude } from "./api.js";
+import { supabase } from "./supabase.js";
 
 const COLORS = {
   bg: "#0a0b0d", surface: "#111318", card: "#161b22", border: "#21262d",
@@ -16,58 +17,132 @@ const Spinner = ({ size = 16, color = COLORS.accent }) => (
 
 const iStyle = {
   display: "block", width: "100%", boxSizing: "border-box",
-  background: COLORS.surface, border: "1px solid " + COLORS.border,
-  borderRadius: 7, padding: "10px 14px", color: COLORS.text,
+  background: "#111318", border: "1px solid #21262d",
+  borderRadius: 7, padding: "10px 14px", color: "#e6edf3",
   fontSize: 13, fontFamily: "inherit", outline: "none",
 };
 
-export default function Employer({ onBack }) {
+export default function Employer({ onBack, user }) {
   const [tab, setTab] = useState("post");
   const [jobTitle, setJobTitle] = useState("");
   const [jobDesc, setJobDesc] = useState("");
   const [skills, setSkills] = useState("");
   const [experience, setExperience] = useState("3-5 years");
-  const [candidates, setCandidates] = useState([]);
+  const [location, setLocation] = useState("");
   const [screening, setScreening] = useState(false);
-  const [cvText, setCvText] = useState("");
   const [results, setResults] = useState([]);
+  const [jobs, setJobs] = useState([]);
+  const [applications, setApplications] = useState([]);
+  const [selectedJob, setSelectedJob] = useState(null);
+  const [posting, setPosting] = useState(false);
+  const [posted, setPosted] = useState(false);
 
-  const sampleCVs = [
-    { name: "Rahul Sharma", cv: "10 years software engineering. React, Node.js, AWS. Led team of 8. Built scalable systems for 1M+ users. IIT Delhi." },
-    { name: "Priya Patel", cv: "5 years frontend developer. React, TypeScript, CSS. Good team player. Some AWS experience. Mumbai University." },
-    { name: "Amit Kumar", cv: "15 years full stack. Java, React, Kubernetes, AWS. Architect level. Led digital transformation at 3 companies. NIT Trichy." },
-    { name: "Sneha Reddy", cv: "2 years React developer. Basic Node.js. Learning AWS. Fresh energy and quick learner. Osmania University." },
-    { name: "Vikram Singh", cv: "8 years backend engineer. Node.js, Python, PostgreSQL, AWS. Microservices expert. Built payment systems. BITS Pilani." },
-  ];
+  useEffect(() => {
+    if (user) {
+      loadJobs();
+    }
+  }, [user]);
 
-  const screenCandidates = async () => {
+  const loadJobs = async () => {
+    const { data } = await supabase
+      .from("jobs")
+      .select("*")
+      .eq("employer_id", user.id)
+      .order("created_at", { ascending: false });
+    if (data) setJobs(data);
+  };
+
+  const loadApplications = async (jobId) => {
+    const { data } = await supabase
+      .from("applications")
+      .select("*")
+      .eq("job_id", jobId)
+      .order("score", { ascending: false });
+    if (data) setApplications(data);
+  };
+
+  const postJob = async () => {
     if (!jobTitle || !jobDesc) return;
+    setPosting(true);
+    const { data, error } = await supabase.from("jobs").insert({
+      employer_id: user.id,
+      title: jobTitle,
+      description: jobDesc,
+      skills,
+      experience,
+      location,
+      active: true,
+    }).select().single();
+    if (data) {
+      setJobs(prev => [data, ...prev]);
+      setSelectedJob(data);
+      setPosted(true);
+      setTab("screen");
+    }
+    setPosting(false);
+  };
+
+  const screenApplications = async () => {
+    if (!selectedJob) return;
     setScreening(true);
     setResults([]);
-    try {
-      const cvList = sampleCVs.map((c, i) => `Candidate ${i+1} - ${c.name}:\n${c.cv}`).join("\n\n");
-      const raw = await callClaude(
-        `You are an expert recruiter. Screen these candidates for the role of ${jobTitle}.
+    await loadApplications(selectedJob.id);
+    const { data: apps } = await supabase
+      .from("applications")
+      .select("*")
+      .eq("job_id", selectedJob.id);
 
-Job Description: ${jobDesc}
-Required Skills: ${skills}
-Experience: ${experience}
+    if (!apps || apps.length === 0) {
+      setScreening(false);
+      return;
+    }
+
+    try {
+      const cvList = apps.map((a, i) => 
+        `Candidate ${i+1} - ${a.applicant_name}:\n${a.cv_text?.slice(0, 500)}`
+      ).join("\n\n");
+
+      const raw = await callClaude(
+        `Screen these candidates for ${selectedJob.title}.
+Job: ${selectedJob.description}
+Skills needed: ${selectedJob.skills}
+Experience: ${selectedJob.experience}
 
 Candidates:
 ${cvList}
 
-Return ONLY a JSON array, no markdown:
+Return ONLY JSON array:
 [{"name":"...","score":85,"verdict":"Strong fit","strengths":["s1","s2"],"concerns":["c1"],"recommendation":"Shortlist"}]`,
-        "Return only raw JSON array. No markdown."
+        "Return only raw JSON array."
       );
       const clean = raw.replace(/```json|```/g, "").trim();
       const start = clean.indexOf("[");
       const end = clean.lastIndexOf("]") + 1;
-      setResults(JSON.parse(clean.slice(start, end)));
+      const scored = JSON.parse(clean.slice(start, end));
+
+      // Update scores in database
+      for (const s of scored) {
+        const app = apps.find(a => a.applicant_name === s.name);
+        if (app) {
+          await supabase.from("applications").update({
+            score: s.score,
+            verdict: s.verdict,
+            strengths: JSON.stringify(s.strengths),
+            concerns: JSON.stringify(s.concerns),
+            recommendation: s.recommendation,
+          }).eq("id", app.id);
+        }
+      }
+      setResults(scored);
     } catch (err) {
       console.error(err);
     }
     setScreening(false);
+  };
+
+  const updateStatus = async (appId, status) => {
+    await supabase.from("applications").update({ status }).eq("id", appId);
+    setApplications(prev => prev.map(a => a.id === appId ? { ...a, status } : a));
   };
 
   const scoreColor = (s) => s >= 80 ? COLORS.green : s >= 60 ? COLORS.accent : COLORS.red;
@@ -86,7 +161,7 @@ Return ONLY a JSON array, no markdown:
 
       <div style={{ display: "flex", gap: 8, marginBottom: 24 }}>
         {[["post", "Post a Job"], ["screen", "Screen CVs"], ["candidates", "Candidates"]].map(([id, label]) => (
-          <button key={id} onClick={() => setTab(id)} style={{
+          <button key={id} onClick={() => { setTab(id); if (id === "candidates" && selectedJob) loadApplications(selectedJob.id); }} style={{
             padding: "8px 20px", background: tab === id ? COLORS.accent : "transparent",
             color: tab === id ? "#0a0b0d" : COLORS.textMuted,
             border: "1px solid " + (tab === id ? COLORS.accent : COLORS.border),
@@ -100,6 +175,23 @@ Return ONLY a JSON array, no markdown:
       {tab === "post" && (
         <div style={{ background: COLORS.card, border: "1px solid " + COLORS.border, borderRadius: 12, padding: 24 }}>
           <h3 style={{ color: COLORS.text, margin: "0 0 20px", fontSize: 16, fontWeight: 700 }}>Post a New Job</h3>
+
+          {jobs.length > 0 && (
+            <div style={{ marginBottom: 20 }}>
+              <div style={{ color: COLORS.textMuted, fontSize: 12, marginBottom: 8 }}>YOUR ACTIVE JOBS</div>
+              {jobs.map(j => (
+                <div key={j.id} onClick={() => { setSelectedJob(j); setTab("screen"); }} style={{
+                  padding: "10px 14px", background: selectedJob?.id === j.id ? COLORS.accent + "15" : COLORS.surface,
+                  border: "1px solid " + (selectedJob?.id === j.id ? COLORS.accent + "40" : COLORS.border),
+                  borderRadius: 7, marginBottom: 6, cursor: "pointer", display: "flex", justifyContent: "space-between",
+                }}>
+                  <span style={{ color: COLORS.text, fontSize: 13, fontWeight: 500 }}>{j.title}</span>
+                  <span style={{ color: COLORS.textMuted, fontSize: 12 }}>{new Date(j.created_at).toLocaleDateString()}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
             <div>
               <label style={{ display: "block", color: COLORS.textMuted, fontSize: 11, letterSpacing: "0.07em", marginBottom: 6, fontWeight: 600 }}>JOB TITLE</label>
@@ -112,50 +204,73 @@ Return ONLY a JSON array, no markdown:
               </select>
             </div>
           </div>
-          <div style={{ marginBottom: 12 }}>
-            <label style={{ display: "block", color: COLORS.textMuted, fontSize: 11, letterSpacing: "0.07em", marginBottom: 6, fontWeight: 600 }}>REQUIRED SKILLS</label>
-            <input value={skills} onChange={e => setSkills(e.target.value)} style={iStyle} placeholder="e.g. React, Node.js, AWS, PostgreSQL" />
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
+            <div>
+              <label style={{ display: "block", color: COLORS.textMuted, fontSize: 11, letterSpacing: "0.07em", marginBottom: 6, fontWeight: 600 }}>REQUIRED SKILLS</label>
+              <input value={skills} onChange={e => setSkills(e.target.value)} style={iStyle} placeholder="e.g. React, Node.js, AWS" />
+            </div>
+            <div>
+              <label style={{ display: "block", color: COLORS.textMuted, fontSize: 11, letterSpacing: "0.07em", marginBottom: 6, fontWeight: 600 }}>LOCATION</label>
+              <input value={location} onChange={e => setLocation(e.target.value)} style={iStyle} placeholder="e.g. Bengaluru / Remote" />
+            </div>
           </div>
           <div style={{ marginBottom: 20 }}>
             <label style={{ display: "block", color: COLORS.textMuted, fontSize: 11, letterSpacing: "0.07em", marginBottom: 6, fontWeight: 600 }}>JOB DESCRIPTION</label>
-            <textarea value={jobDesc} onChange={e => setJobDesc(e.target.value)} rows={6}
+            <textarea value={jobDesc} onChange={e => setJobDesc(e.target.value)} rows={5}
               style={{ ...iStyle, resize: "vertical" }} placeholder="Describe the role, responsibilities and requirements..." />
           </div>
-          <button onClick={() => { setTab("screen"); screenCandidates(); }} disabled={!jobTitle || !jobDesc} style={{
+          <button onClick={postJob} disabled={posting || !jobTitle || !jobDesc} style={{
             width: "100%", padding: "12px", background: COLORS.accent, color: "#0a0b0d",
-            border: "none", borderRadius: 7, fontSize: 14, fontWeight: 700, cursor: "pointer",
+            border: "none", borderRadius: 7, fontSize: 14, fontWeight: 700,
+            cursor: posting ? "not-allowed" : "pointer",
+            display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
           }}>
-            Post Job & Screen Candidates with AI
+            {posting ? <><Spinner size={16} color="#0a0b0d" /> Posting...</> : "Post Job"}
           </button>
+          {posted && <p style={{ color: COLORS.green, fontSize: 13, marginTop: 10, textAlign: "center" }}>✅ Job posted! Candidates can now apply.</p>}
         </div>
       )}
 
       {tab === "screen" && (
         <div>
-          <div style={{ background: COLORS.card, border: "1px solid " + COLORS.border, borderRadius: 12, padding: 24, marginBottom: 16 }}>
-            <h3 style={{ color: COLORS.text, margin: "0 0 16px", fontSize: 16, fontWeight: 700 }}>AI CV Screening</h3>
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ display: "block", color: COLORS.textMuted, fontSize: 11, letterSpacing: "0.07em", marginBottom: 6, fontWeight: 600 }}>PASTE CANDIDATE CVs</label>
-              <textarea value={cvText} onChange={e => setCvText(e.target.value)} rows={8}
-                style={{ ...iStyle, fontFamily: "monospace", fontSize: 12, resize: "vertical" }}
-                placeholder="Paste multiple CVs here or use sample candidates below..." />
+          {!selectedJob ? (
+            <div style={{ background: COLORS.card, border: "1px solid " + COLORS.border, borderRadius: 12, padding: 40, textAlign: "center" }}>
+              <p style={{ color: COLORS.textMuted }}>Please post a job first!</p>
+              <button onClick={() => setTab("post")} style={{ padding: "10px 24px", background: COLORS.accent, color: "#0a0b0d", border: "none", borderRadius: 7, fontSize: 14, fontWeight: 700, cursor: "pointer", marginTop: 16 }}>
+                Post a Job
+              </button>
             </div>
-            <button onClick={screenCandidates} disabled={screening || !jobTitle} style={{
-              width: "100%", padding: "12px", background: screening ? COLORS.border : COLORS.accent,
-              color: "#0a0b0d", border: "none", borderRadius: 7, fontSize: 14, fontWeight: 700,
-              cursor: screening ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-            }}>
-              {screening ? <><Spinner size={16} color="#0a0b0d" /> Screening with AI...</> : "Screen Candidates with AI"}
-            </button>
-            {!jobTitle && <p style={{ color: COLORS.red, fontSize: 12, marginTop: 8 }}>Please post a job first!</p>}
-          </div>
-
-          {results.length > 0 && (
+          ) : (
             <div>
-              <h3 style={{ color: COLORS.text, fontSize: 16, fontWeight: 700, marginBottom: 16 }}>
-                Ranked Candidates — {results.length} screened
-              </h3>
-              {results.sort((a, b) => b.score - a.score).map((r, i) => (
+              <div style={{ background: COLORS.card, border: "1px solid " + COLORS.border, borderRadius: 12, padding: 20, marginBottom: 16 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div>
+                    <h3 style={{ color: COLORS.text, margin: "0 0 4px", fontSize: 15, fontWeight: 700 }}>{selectedJob.title}</h3>
+                    <p style={{ color: COLORS.textMuted, margin: 0, fontSize: 13 }}>{selectedJob.location} · {selectedJob.experience}</p>
+                  </div>
+                  <button onClick={screenApplications} disabled={screening} style={{
+                    padding: "10px 20px", background: screening ? COLORS.border : COLORS.accent,
+                    color: "#0a0b0d", border: "none", borderRadius: 7, fontSize: 13, fontWeight: 700,
+                    cursor: screening ? "not-allowed" : "pointer",
+                    display: "flex", alignItems: "center", gap: 8,
+                  }}>
+                    {screening ? <><Spinner size={14} color="#0a0b0d" /> Screening...</> : "Screen with AI"}
+                  </button>
+                </div>
+              </div>
+
+              {applications.length === 0 && !screening && (
+                <div style={{ background: COLORS.card, border: "1px solid " + COLORS.border, borderRadius: 12, padding: 40, textAlign: "center" }}>
+                  <div style={{ fontSize: 48, marginBottom: 16 }}>📭</div>
+                  <p style={{ color: COLORS.textMuted, fontSize: 14 }}>No applications yet.</p>
+                  <p style={{ color: COLORS.textMuted, fontSize: 13 }}>Share your job link to start receiving applications!</p>
+                  <div style={{ background: COLORS.surface, border: "1px solid " + COLORS.border, borderRadius: 7, padding: "10px 14px", marginTop: 16, fontFamily: "monospace", fontSize: 13, color: COLORS.textMuted }}>
+                    hirex.world/jobs/{selectedJob.id}
+                  </div>
+                </div>
+              )}
+
+              {results.length > 0 && results.sort((a, b) => b.score - a.score).map((r, i) => (
                 <div key={i} style={{ background: COLORS.card, border: "1px solid " + COLORS.border, borderRadius: 10, padding: 20, marginBottom: 12 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
                     <div>
@@ -175,7 +290,7 @@ Return ONLY a JSON array, no markdown:
                   <div style={{ background: COLORS.border, borderRadius: 99, height: 4, marginBottom: 14 }}>
                     <div style={{ width: r.score + "%", height: "100%", background: scoreColor(r.score), borderRadius: 99 }} />
                   </div>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 14 }}>
                     <div>
                       <div style={{ color: COLORS.green, fontSize: 11, fontWeight: 700, marginBottom: 6 }}>STRENGTHS</div>
                       {r.strengths?.map((s, j) => <div key={j} style={{ color: COLORS.textMuted, fontSize: 12, marginBottom: 4 }}>+ {s}</div>)}
@@ -185,16 +300,10 @@ Return ONLY a JSON array, no markdown:
                       {r.concerns?.map((c, j) => <div key={j} style={{ color: COLORS.textMuted, fontSize: 12, marginBottom: 4 }}>- {c}</div>)}
                     </div>
                   </div>
-                  <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
-                    <button style={{ padding: "6px 16px", background: COLORS.green, color: "#0a0b0d", border: "none", borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: "pointer" }}>
-                      Shortlist
-                    </button>
-                    <button style={{ padding: "6px 16px", background: "transparent", color: COLORS.textMuted, border: "1px solid " + COLORS.border, borderRadius: 6, fontSize: 12, cursor: "pointer" }}>
-                      Reject
-                    </button>
-                    <button style={{ padding: "6px 16px", background: COLORS.blue + "20", color: COLORS.blue, border: "1px solid " + COLORS.blue + "40", borderRadius: 6, fontSize: 12, cursor: "pointer" }}>
-                      Schedule Interview
-                    </button>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <button style={{ padding: "6px 16px", background: COLORS.green, color: "#0a0b0d", border: "none", borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: "pointer" }}>Shortlist</button>
+                    <button style={{ padding: "6px 16px", background: "transparent", color: COLORS.textMuted, border: "1px solid " + COLORS.border, borderRadius: 6, fontSize: 12, cursor: "pointer" }}>Reject</button>
+                    <button style={{ padding: "6px 16px", background: COLORS.blue + "20", color: COLORS.blue, border: "1px solid " + COLORS.blue + "40", borderRadius: 6, fontSize: 12, cursor: "pointer" }}>Schedule Interview</button>
                   </div>
                 </div>
               ))}
@@ -205,32 +314,34 @@ Return ONLY a JSON array, no markdown:
 
       {tab === "candidates" && (
         <div style={{ background: COLORS.card, border: "1px solid " + COLORS.border, borderRadius: 12, padding: 24 }}>
-          <h3 style={{ color: COLORS.text, margin: "0 0 16px", fontSize: 16, fontWeight: 700 }}>All Candidates</h3>
-          {results.length === 0 ? (
+          <h3 style={{ color: COLORS.text, margin: "0 0 16px", fontSize: 16, fontWeight: 700 }}>All Applications</h3>
+          {applications.length === 0 ? (
             <div style={{ textAlign: "center", padding: "40px 0" }}>
               <div style={{ fontSize: 48, marginBottom: 16 }}>📋</div>
-              <p style={{ color: COLORS.textMuted }}>No candidates yet. Post a job and screen CVs first!</p>
+              <p style={{ color: COLORS.textMuted }}>No applications yet!</p>
               <button onClick={() => setTab("post")} style={{ padding: "10px 24px", background: COLORS.accent, color: "#0a0b0d", border: "none", borderRadius: 7, fontSize: 14, fontWeight: 700, cursor: "pointer", marginTop: 16 }}>
                 Post a Job
               </button>
             </div>
           ) : (
-            results.sort((a, b) => b.score - a.score).map((r, i) => (
+            applications.map((a, i) => (
               <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: "1px solid " + COLORS.border }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                   <div style={{ width: 36, height: 36, borderRadius: "50%", background: COLORS.accent + "20", display: "flex", alignItems: "center", justifyContent: "center", color: COLORS.accent, fontWeight: 700, fontSize: 14 }}>
-                    {r.name[0]}
+                    {a.applicant_name?.[0] || "?"}
                   </div>
                   <div>
-                    <div style={{ color: COLORS.text, fontWeight: 600, fontSize: 14 }}>{r.name}</div>
-                    <div style={{ color: COLORS.textMuted, fontSize: 12 }}>{r.verdict}</div>
+                    <div style={{ color: COLORS.text, fontWeight: 600, fontSize: 14 }}>{a.applicant_name}</div>
+                    <div style={{ color: COLORS.textMuted, fontSize: 12 }}>{a.applicant_email}</div>
                   </div>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                  <span style={{ color: scoreColor(r.score), fontWeight: 800, fontSize: 16, fontFamily: "monospace" }}>{r.score}%</span>
-                  <span style={{ background: r.recommendation === "Shortlist" ? COLORS.green + "20" : COLORS.red + "20", color: r.recommendation === "Shortlist" ? COLORS.green : COLORS.red, padding: "2px 10px", borderRadius: 20, fontSize: 11, fontWeight: 600 }}>
-                    {r.recommendation}
+                  {a.score && <span style={{ color: scoreColor(a.score), fontWeight: 800, fontSize: 16, fontFamily: "monospace" }}>{a.score}%</span>}
+                  <span style={{ background: a.status === "shortlisted" ? COLORS.green + "20" : a.status === "rejected" ? COLORS.red + "20" : COLORS.accent + "20", color: a.status === "shortlisted" ? COLORS.green : a.status === "rejected" ? COLORS.red : COLORS.accent, padding: "2px 10px", borderRadius: 20, fontSize: 11, fontWeight: 600 }}>
+                    {a.status || "pending"}
                   </span>
+                  <button onClick={() => updateStatus(a.id, "shortlisted")} style={{ padding: "4px 12px", background: COLORS.green, color: "#0a0b0d", border: "none", borderRadius: 6, fontSize: 11, fontWeight: 700, cursor: "pointer" }}>Shortlist</button>
+                  <button onClick={() => updateStatus(a.id, "rejected")} style={{ padding: "4px 12px", background: "transparent", color: COLORS.textMuted, border: "1px solid " + COLORS.border, borderRadius: 6, fontSize: 11, cursor: "pointer" }}>Reject</button>
                 </div>
               </div>
             ))
