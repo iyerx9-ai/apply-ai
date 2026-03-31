@@ -17,7 +17,7 @@ export default async function handler(req, res) {
         "Authorization": `Bearer ${process.env.RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: "ApplyAI <onboarding@resend.dev>",
+        from: "ApplyAI <hello@hirex.world>",
         to: email,
         subject: "Welcome to ApplyAI — Your AI Job Search Starts Now! ⚡",
         html: `
