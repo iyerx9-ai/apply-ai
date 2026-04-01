@@ -39,6 +39,7 @@ export default function Employer({ onBack, user }) {
   const [posting, setPosting] = useState(false);
   const [posted, setPosted] = useState(false);
   const [employerPlan, setEmployerPlan] = useState("free");
+  const [showUPIQR, setShowUPIQR] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -56,8 +57,22 @@ export default function Employer({ onBack, user }) {
     if (data?.plan === "employer") setEmployerPlan("pro");
   };
 
+  const isIndia = () => {
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    return timezone.includes("Calcutta") || timezone.includes("Kolkata");
+  };
+
   const handleEmployerUpgrade = () => {
-    window.location.href = "https://buy.paddle.com/product/pri_01kn25pt4rtaetbdw3ysqdde6g";
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    if (isIndia()) {
+      if (isMobile) {
+        window.open("upi://pay?pa=9985847014@jupiteraxis&pn=HireX&am=2999&cu=INR&tn=HireX+Employer+Plan", "_blank");
+      } else {
+        setShowUPIQR(true);
+      }
+    } else {
+      window.location.href = "https://buy.paddle.com/product/pri_01kn25pt4rtaetbdw3ysqdde6g";
+    }
   };
 
   const loadJobs = async () => {
@@ -161,11 +176,30 @@ Return ONLY JSON array:
   };
 
   const scoreColor = (s) => s >= 80 ? COLORS.green : s >= 60 ? COLORS.accent : COLORS.red;
-
   const visibleResults = employerPlan === "pro" ? results : results.slice(0, 3);
 
   return (
     <div style={{ maxWidth: 900, margin: "0 auto" }}>
+
+      {showUPIQR && (
+        <div onClick={() => setShowUPIQR(false)} style={{ position: "fixed", inset: 0, background: "#000000cc", zIndex: 2000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: COLORS.card, border: "1px solid " + COLORS.border, borderRadius: 16, padding: 32, textAlign: "center", maxWidth: 360, width: "100%" }}>
+            <h3 style={{ color: COLORS.text, margin: "0 0 6px", fontSize: 18, fontWeight: 700 }}>Pay with UPI</h3>
+            <p style={{ color: COLORS.textMuted, fontSize: 13, margin: "0 0 20px" }}>Scan QR code with any UPI app</p>
+            <img
+              src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent("upi://pay?pa=9985847014@jupiteraxis&pn=HireX&am=2999&cu=INR&tn=HireX+Employer+Plan")}`}
+              alt="UPI QR"
+              style={{ width: 200, height: 200, borderRadius: 8, marginBottom: 16 }}
+            />
+            <p style={{ color: COLORS.text, fontSize: 14, fontWeight: 600, margin: "0 0 4px" }}>UPI ID: 9985847014@jupiteraxis</p>
+            <p style={{ color: COLORS.accent, fontSize: 20, fontWeight: 800, margin: "0 0 4px" }}>₹2,999/month</p>
+            <p style={{ color: COLORS.green, fontSize: 12, fontWeight: 600, margin: "0 0 4px" }}>First month FREE!</p>
+            <p style={{ color: COLORS.textMuted, fontSize: 12, margin: "0 0 16px" }}>After payment, email screenshot to iyerx9@gmail.com to activate.</p>
+            <button onClick={() => setShowUPIQR(false)} style={{ padding: "8px 24px", background: "transparent", color: COLORS.textMuted, border: "1px solid " + COLORS.border, borderRadius: 7, cursor: "pointer", fontSize: 13 }}>Close</button>
+          </div>
+        </div>
+      )}
+
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
         <div>
           <h1 style={{ color: COLORS.text, margin: "0 0 4px", fontSize: 24, fontWeight: 800 }}>Employer Dashboard</h1>
@@ -180,10 +214,12 @@ Return ONLY JSON array:
         <div style={{ background: COLORS.accent + "15", border: "1px solid " + COLORS.accent + "40", borderRadius: 10, padding: 16, marginBottom: 20, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
           <div>
             <div style={{ color: COLORS.accent, fontWeight: 700, fontSize: 14, marginBottom: 4 }}>Free Plan — Limited Access</div>
-            <div style={{ color: COLORS.textMuted, fontSize: 13 }}>Post 1 job, see top 3 candidates only. Start 7-day free trial for unlimited access!</div>
+            <div style={{ color: COLORS.textMuted, fontSize: 13 }}>
+              {isIndia() ? "Post 1 job, see top 3 candidates. First month FREE — ₹2,999/month after!" : "Post 1 job, see top 3 candidates. 7-day free trial — $35.99/month after!"}
+            </div>
           </div>
           <button onClick={handleEmployerUpgrade} style={{ padding: "10px 20px", background: COLORS.accent, color: "#0a0b0d", border: "none", borderRadius: 7, fontSize: 13, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" }}>
-            Start 7-Day Free Trial
+            {isIndia() ? "Start Free — ₹2,999/month" : "Start 7-Day Free Trial"}
           </button>
         </div>
       )}
@@ -204,7 +240,6 @@ Return ONLY JSON array:
       {tab === "post" && (
         <div style={{ background: COLORS.card, border: "1px solid " + COLORS.border, borderRadius: 12, padding: 24 }}>
           <h3 style={{ color: COLORS.text, margin: "0 0 20px", fontSize: 16, fontWeight: 700 }}>Post a New Job</h3>
-
           {jobs.length > 0 && (
             <div style={{ marginBottom: 20 }}>
               <div style={{ color: COLORS.textMuted, fontSize: 12, marginBottom: 8 }}>YOUR ACTIVE JOBS</div>
@@ -220,7 +255,6 @@ Return ONLY JSON array:
               ))}
             </div>
           )}
-
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
             <div>
               <label style={{ display: "block", color: COLORS.textMuted, fontSize: 11, letterSpacing: "0.07em", marginBottom: 6, fontWeight: 600 }}>JOB TITLE</label>
@@ -288,14 +322,11 @@ Return ONLY JSON array:
                 </div>
               </div>
 
-              {applications.length === 0 && results.length === 0 && !screening && (
+              {results.length === 0 && !screening && (
                 <div style={{ background: COLORS.card, border: "1px solid " + COLORS.border, borderRadius: 12, padding: 40, textAlign: "center" }}>
                   <div style={{ fontSize: 48, marginBottom: 16 }}>📭</div>
                   <p style={{ color: COLORS.textMuted, fontSize: 14 }}>No applications yet.</p>
-                  <p style={{ color: COLORS.textMuted, fontSize: 13 }}>Share your job link to start receiving applications!</p>
-                  <div style={{ background: COLORS.surface, border: "1px solid " + COLORS.border, borderRadius: 7, padding: "10px 14px", marginTop: 16, fontFamily: "monospace", fontSize: 13, color: COLORS.textMuted }}>
-                    hirex.world → Jobs Board
-                  </div>
+                  <p style={{ color: COLORS.textMuted, fontSize: 13 }}>Share your job — candidates apply at hirex.world → Jobs Board</p>
                 </div>
               )}
 
@@ -347,7 +378,7 @@ Return ONLY JSON array:
                     Upgrade to see all ranked candidates with AI insights.
                   </p>
                   <button onClick={handleEmployerUpgrade} style={{ padding: "12px 28px", background: COLORS.accent, color: "#0a0b0d", border: "none", borderRadius: 7, fontSize: 14, fontWeight: 700, cursor: "pointer" }}>
-                    Start 7-Day Free Trial — then $35.99/month
+                    {isIndia() ? "Upgrade — First Month FREE!" : "Start 7-Day Free Trial — $35.99/month"}
                   </button>
                 </div>
               )}
