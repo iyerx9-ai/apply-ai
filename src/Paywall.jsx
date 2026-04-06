@@ -6,18 +6,7 @@ const COLORS = {
 };
 
 export default function Paywall({ onClose, reason = "searches", user, onUpgradeSuccess }) {
-  const handlePaddle = () => {
-    if (window.Paddle) {
-      window.Paddle.Initialize({ token: "live_040d02e495a75071975e3dee5d3" });
-      window.Paddle.Checkout.open({
-        items: [{ priceId: "pri_01kmzkr4pr65s00cqfwc83n3ch", quantity: 1 }],
-        customer: { email: user?.email || "" },
-        successUrl: "https://hirex.world",
-      });
-    } else {
-      window.location.href = "https://buy.paddle.com/product/pri_01kmzkr4pr65s00cqfwc83n3ch";
-    }
-  };
+
 
   const [showUPI, setShowUPI] = useState(false);
 
